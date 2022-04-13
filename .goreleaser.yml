@@ -1,0 +1,30 @@
+# Visit https://goreleaser.com for documentation on how to customize this
+# behavior.
+builds:
+  - env:
+      # goreleaser does not work with CGO, it could also complicate
+      # usage by users in CI/CD systems like Terraform Cloud where
+      # they are unable to install libraries.
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    goos:
+      - linux
+    goarch:
+      - amd64
+    main: ./cmd/vault-plugin-secrets-grafanacloud
+dockers:
+  - dockerfile: build/package/vault-plugin-secrets-grafanacloud/Dockerfile
+    image_templates:
+    - "form3tech/vault-plugin-secrets-grafanacloud:{{ .Tag }}"
+    goos: linux
+    goarch: amd64
+archives:
+  - format: binary
+checksum:
+  algorithm: sha256
+release:
+  prerelease: auto
+changelog:
+  skip: true
