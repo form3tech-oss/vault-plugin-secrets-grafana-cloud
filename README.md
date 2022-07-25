@@ -5,15 +5,34 @@ A Vault secrets engine for creating dynamic API keys in grafana cloud.
 ## Why?
 Managing API tokens securely can be a challange, keeping keys secure and rotating keys is hard when tokens are distributed over many deployments and users.
 
-If you already use Vault to manage secrets then his plugin will enable vault to issue short lived Grafana Cloud API keys, putting the responsibility for the security and lifetime of those keys within Vault itself.
+If you already use Vault to manage secrets then this plugin will enable vault to issue short lived Grafana Cloud API keys, putting the responsibility for the security and lifetime of those keys within Vault itself.
 
-## Setup
+## Installation
 
-To enable the plugin:
+1. Place the plugin in the Vault plugin directory 
+
+    - **a - From Binary -**
+    Download the latest release and copy the binary into the vault plugin directory
+
+    - **b - From Docker -**
+    The plugin is also published as a [docker container](https://hub.docker.com/r/form3tech/vault-plugin-secrets-grafanacloud) that can be mounted as a shared volume with the vault plugin directory.
+
+
+2. Register the plugin with Vault, the SHA256 is published along with each release:
+
+```shell
+vault plugin register -sha256=$SHA256 secret vault-plugin-secrets-grafanacloud
+```
+
+3. Once the plugin is installed and registered it must be enabled:
 
 ```shell
 vault secrets enable -path=grafanacloud vault-plugin-secrets-grafanacloud
 ```
+
+## Setup
+
+These setup steps can also be performed using the [terraform provider](https://github.com/form3tech-oss/terraform-provider-vault-grafanacloud).
 
 To configure the plugin you will need the following details of the grafana cloud organisation that the plugin will create api keys in:
 
@@ -37,7 +56,7 @@ vault write grafanacloud/config \
 
 ## Usage
 
-After the secrets engine is configured Vault can be used to generate grafana cloud api tokens for a given role.
+After the secrets engine is configured Vault can be used to generate grafana cloud api tokens for a given role. These steps can also be performed using the [terraform provider](https://github.com/form3tech-oss/terraform-provider-vault-grafanacloud).
 
 1. Setup role
 
