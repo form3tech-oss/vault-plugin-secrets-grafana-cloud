@@ -1,3 +1,5 @@
+include Makefile.deps
+
 .DEFAULT_GOAL := default
 
 platform := $(shell uname)
@@ -5,6 +7,8 @@ platform := $(shell uname)
 GOFMT_FILES?=$$(find ./ -name '*.go' | grep -v vendor)
 DOCKER_IMG ?= form3tech/vault-plugin-secrets-grafanacloud
 TRAVIS_TAG ?= develop
+SHELL := /bin/bash
+PATH := $(PATH):$(PWD)/bin
 
 default: build test
 
@@ -68,4 +72,7 @@ publish: docker-build
 	@echo "==> Pushing built image..."
 	docker push $(DOCKER_IMG):$(tag)
 
-.PHONY: build test vet goimports errcheck lint vendor-status default generate publish docker-build
+release:
+	goreleaser
+
+.PHONY: build test vet goimports errcheck lint vendor-status default generate publish docker-build release

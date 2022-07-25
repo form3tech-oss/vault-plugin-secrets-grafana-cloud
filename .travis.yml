@@ -21,6 +21,6 @@ jobs:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: make publish tag=${TRAVIS_TAG}
+    script: make deps publish tag=${TRAVIS_TAG} release
     on:
       tags: true
