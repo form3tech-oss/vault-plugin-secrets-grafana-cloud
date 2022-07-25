@@ -62,17 +62,14 @@ lint:
 		exit 1; \
 	fi
 
-docker-build:
+build:
 	@echo "==> Building docker image..."
-	docker build -f build/package/vault-plugin-secrets-grafanacloud/Dockerfile -t $(DOCKER_IMG):$(tag) .
+	goreleaser --snapshot
 
-publish: docker-build
+release:
 	@echo "==> Logging in to the docker registry..."
 	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
 	@echo "==> Pushing built image..."
-	docker push $(DOCKER_IMG):$(tag)
-
-release:
 	goreleaser
 
 .PHONY: build test vet goimports errcheck lint vendor-status default generate publish docker-build release

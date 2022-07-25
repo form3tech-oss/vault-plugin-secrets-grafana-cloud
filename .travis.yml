@@ -17,10 +17,10 @@ jobs:
     - stage: test
       name: Go Test
       script:
-        - make test docker-build tag=develop
+        - make test build
 deploy:
   - provider: script
     skip_cleanup: true
-    script: make deps publish tag=${TRAVIS_TAG} release
+    script: make deps release
     on:
       tags: true

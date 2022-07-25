@@ -14,8 +14,14 @@ builds:
     goarch:
       - amd64
     main: ./cmd/vault-plugin-secrets-grafanacloud
+dockers:
+  - dockerfile: build/package/vault-plugin-secrets-grafanacloud/Dockerfile
+    image_templates:
+    - "form3tech/vault-plugin-secrets-grafanacloud:{{ .Tag }}"
+    goos: linux
+    goarch: amd64
 archives:
-  - format: tar.gz
+  - format: binary
 checksum:
   algorithm: sha256
 release:
