@@ -64,12 +64,12 @@ lint:
 
 build:
 	@echo "==> Building docker image..."
-	goreleaser --snapshot
+	goreleaser --rm-dist --snapshot
 
 release:
 	@echo "==> Logging in to the docker registry..."
 	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
 	@echo "==> Pushing built image..."
-	goreleaser
+	goreleaser --rm-dist
 
 .PHONY: build test vet goimports errcheck lint vendor-status default generate publish docker-build release
