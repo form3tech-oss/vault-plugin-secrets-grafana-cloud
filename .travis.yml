@@ -17,7 +17,7 @@ jobs:
     - stage: test
       name: Go Test
       script:
-        - make test build
+        - make deps test build
 deploy:
   - provider: script
     skip_cleanup: true
