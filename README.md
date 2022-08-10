@@ -61,7 +61,7 @@ After the secrets engine is configured Vault can be used to generate grafana clo
 1. Setup role
 
 ```shell
-vault write grafanacloud/role/examplerole \
+vault write grafanacloud/roles/examplerole \
     gc_role="Viewer" # The desired grafana cloud role for api keys generated for this role \
     ttl="300"        # Default lease for generated api keys \
     max_ttl="3600"   # Maximum time for role (see https://learn.hashicorp.com/tutorials/vault/tokens#ttl-and-max-ttl)
