@@ -11,7 +11,18 @@ import (
 	"github.com/hashicorp/vault/sdk/logical"
 )
 
-const testUser = "1234"
+const (
+	testPrometheusUser   = "1"
+	testLokiUser         = "2"
+	testTempoUser        = "3"
+	testAlertmanagerUser = "4"
+	testGraphiteUser     = "5"
+	testPrometheusUrl    = "http://prometheus"
+	testLokiUrl          = "http://loki"
+	testTempoUrl         = "http://tempo"
+	testAlertmanagerUrl  = "http://alertmanager"
+	testGraphiteUrl      = "http://graphite"
+)
 
 // newAcceptanceTestEnv creates a test environment for credentials
 func newAcceptanceTestEnv() (*testEnv, error) {
@@ -31,13 +42,23 @@ func newAcceptanceTestEnv() (*testEnv, error) {
 		return nil, err
 	}
 	return &testEnv{
-		Organisation: os.Getenv(envVarGrafanaCloudOrganisation),
-		Key:          os.Getenv(envVarGrafanaCloudAPIKey),
-		URL:          os.Getenv(envVarGrafanaCloudURL),
-		User:         testUser,
-		Backend:      b,
-		Context:      ctx,
-		Storage:      &logical.InmemStorage{},
+		Organisation:     os.Getenv(envVarGrafanaCloudOrganisation),
+		Key:              os.Getenv(envVarGrafanaCloudAPIKey),
+		URL:              os.Getenv(envVarGrafanaCloudURL),
+		PrometheusUser:   testPrometheusUser,
+		PrometheusURL:    testPrometheusUrl,
+		LokiUser:         testLokiUser,
+		LokiURL:          testLokiUrl,
+		TempoUser:        testTempoUser,
+		TempoURL:         testTempoUrl,
+		AlertmanagerUser: testAlertmanagerUser,
+		AlertmanagerURL:  testAlertmanagerUrl,
+		GraphiteUser:     testGraphiteUser,
+		GraphiteURL:      testGraphiteUrl,
+
+		Backend: b,
+		Context: ctx,
+		Storage: &logical.InmemStorage{},
 	}, nil
 }
 

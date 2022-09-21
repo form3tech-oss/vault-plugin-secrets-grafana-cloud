@@ -52,7 +52,7 @@ func (b *grafanaCloudBackend) createKey(ctx context.Context, s logical.Storage, 
 	}
 
 	var token *GrafanaCloudKey
-	token, err = createKey(ctx, client, config.Organisation, roleName, config.User, roleEntry.GrafanaCloudRole)
+	token, err = createKey(ctx, client, config.Organisation, roleName, config, roleEntry.GrafanaCloudRole)
 
 	if err != nil {
 		return nil, fmt.Errorf("error creating Grafana Cloud token: %w", err)
@@ -77,6 +77,46 @@ func (b *grafanaCloudBackend) createUserCreds(ctx context.Context, req *logical.
 
 	if key.User != "" {
 		responseData["user"] = key.User
+	}
+
+	if key.PrometheusUser != "" {
+		responseData["prometheus_user"] = key.PrometheusUser
+	}
+
+	if key.LokiUser != "" {
+		responseData["loki_user"] = key.LokiUser
+	}
+
+	if key.TempoUser != "" {
+		responseData["tempo_user"] = key.TempoUser
+	}
+
+	if key.AlertmanagerUser != "" {
+		responseData["alertmanager_user"] = key.AlertmanagerUser
+	}
+
+	if key.GraphiteUser != "" {
+		responseData["graphite_user"] = key.GraphiteUser
+	}
+
+	if key.PrometheusURL != "" {
+		responseData["prometheus_url"] = key.PrometheusURL
+	}
+
+	if key.LokiURL != "" {
+		responseData["loki_url"] = key.LokiURL
+	}
+
+	if key.TempoURL != "" {
+		responseData["tempo_url"] = key.TempoURL
+	}
+
+	if key.AlertmanagerURL != "" {
+		responseData["alertmanager_url"] = key.AlertmanagerURL
+	}
+
+	if key.GraphiteURL != "" {
+		responseData["graphite_url"] = key.GraphiteURL
 	}
 
 	resp := b.Secret(grafanaCloudKeyType).Response(
