@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/vault/sdk/framework"
-
-	"github.com/form3tech-oss/vault-plugin-secrets-grafanacloud/client"
 	uuid "github.com/google/uuid"
+	grafanclient "github.com/grafana/grafana-api-golang-client"
+	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
 )
 
@@ -58,7 +57,7 @@ func (b *grafanaCloudBackend) keyRevoke(ctx context.Context, req *logical.Reques
 
 	org := config.Organisation
 	tokenID := req.Secret.InternalData["name"].(string)
-	err = c.DeleteAPIKey(ctx, org, tokenID)
+	err = c.DeleteCloudAPIKey(org, tokenID)
 	if err != nil {
 		return nil, err
 	}
@@ -94,16 +93,18 @@ func (b *grafanaCloudBackend) keyRenew(ctx context.Context, req *logical.Request
 	return resp, nil
 }
 
-func createKey(ctx context.Context, c *client.Client, organisation, roleName string, config *grafanaCloudConfig, grafanaCloudRole string,
+func createKey(_ context.Context, c *grafanclient.Client, organisation, roleName string,
+	config *grafanaCloudConfig, grafanaCloudRole string,
 ) (*GrafanaCloudKey, error) {
 	suffix := uuid.New().String()
 	tokenName := fmt.Sprintf("%s_%s", roleName, suffix)
 
-	key, err := c.CreateAPIKey(ctx, &client.CreateAPIKeyInput{
-		Name:         tokenName,
-		Role:         grafanaCloudRole,
-		Organisation: organisation,
-	})
+	key, err := c.CreateCloudAPIKey(
+		organisation,
+		&grafanclient.CreateCloudAPIKeyInput{
+			Name: tokenName,
+			Role: grafanaCloudRole,
+		})
 	if err != nil {
 		return nil, fmt.Errorf("error creating Grafana Cloud key: %w", err)
 	}

@@ -35,13 +35,13 @@ changelog:
       order: 3
     - title: Others
       order: 999
-  
+
   filters:
     exclude:
       - '^docs'
       - '^ci'
       - typo
-  
+
 archives:
   - format: binary
 checksum:

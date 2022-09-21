@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/form3tech-oss/vault-plugin-secrets-grafanacloud/client"
+	grafanclient "github.com/grafana/grafana-api-golang-client"
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
 )
@@ -32,7 +32,7 @@ func Factory(ctx context.Context, conf *logical.BackendConfig) (logical.Backend,
 type grafanaCloudBackend struct {
 	*framework.Backend
 	lock   sync.RWMutex
-	client *client.Client
+	client *grafanclient.Client
 }
 
 func backend() *grafanaCloudBackend {
@@ -75,7 +75,7 @@ func (b *grafanaCloudBackend) reset() {
 	b.client = nil
 }
 
-func (b *grafanaCloudBackend) getClient(ctx context.Context, s logical.Storage) (*client.Client, error) {
+func (b *grafanaCloudBackend) getClient(ctx context.Context, s logical.Storage) (*grafanclient.Client, error) {
 	b.lock.RLock()
 	unlockFunc := b.lock.RUnlock
 	defer func() { unlockFunc() }()
@@ -97,7 +97,17 @@ func (b *grafanaCloudBackend) getClient(ctx context.Context, s logical.Storage) 
 		config = new(grafanaCloudConfig)
 	}
 
-	b.client, err = client.NewClient(config.URL, config.Key)
+	const apiSuffix = "api"
+	baseURL := strings.ToLower(config.URL)
+	if strings.HasSuffix(baseURL, apiSuffix) {
+		baseURL = strings.TrimSuffix(baseURL, apiSuffix)
+	} else if strings.HasSuffix(baseURL, apiSuffix+"/") {
+		baseURL = strings.TrimSuffix(baseURL, apiSuffix+"/")
+	}
+
+	b.client, err = grafanclient.New(baseURL, grafanclient.Config{
+		APIKey: config.Key,
+	})
 	if err != nil {
 		return nil, err
 	}
