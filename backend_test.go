@@ -167,7 +167,7 @@ func (e *testEnv) CleanupUserTokens(t *testing.T) {
 			t.Fatal("fatal getting client")
 		}
 
-		err = client.DeleteAPIKey(e.Context, e.Organisation, token)
+		err = client.DeleteCloudAPIKey(e.Organisation, token)
 		if err != nil {
 			t.Fatalf("unexpected error deleting API key: %s", err)
 		}
