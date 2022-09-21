@@ -15,6 +15,7 @@ const (
 	envVarGrafanaCloudOrganisation = "TEST_GRAFANA_CLOUD_ORGANISATION"
 	envVarGrafanaCloudAPIKey       = "TEST_GRAFANA_CLOUD_API_KEY"
 	envVarGrafanaCloudURL          = "TEST_GRAFANA_CLOUD_URL"
+	envVarCATarPath                = "TEST_GRAFANA_CLOUD_CA_TAR_PATH"
 )
 
 // getTestBackend will help you construct a test backend object.
