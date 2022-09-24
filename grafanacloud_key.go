@@ -13,9 +13,19 @@ import (
 )
 
 type GrafanaCloudKey struct {
-	Name  string
-	Token string
-	User  string
+	Name             string
+	Token            string
+	User             string
+	PrometheusUser   string
+	PrometheusURL    string
+	LokiUser         string
+	LokiURL          string
+	TempoUser        string
+	TempoURL         string
+	AlertmanagerUser string
+	AlertmanagerURL  string
+	GraphiteUser     string
+	GraphiteURL      string
 }
 
 func (b *grafanaCloudBackend) grafanaCloudKey() *framework.Secret {
@@ -85,7 +95,7 @@ func (b *grafanaCloudBackend) keyRenew(ctx context.Context, req *logical.Request
 	return resp, nil
 }
 
-func createKey(ctx context.Context, c *client.Client, organisation, roleName, user, grafanaCloudRole string) (*GrafanaCloudKey, error) {
+func createKey(ctx context.Context, c *client.Client, organisation, roleName string, config *grafanaCloudConfig, grafanaCloudRole string) (*GrafanaCloudKey, error) {
 	suffix := uuid.New().String()
 	tokenName := fmt.Sprintf("%s_%s", roleName, suffix)
 
@@ -100,8 +110,18 @@ func createKey(ctx context.Context, c *client.Client, organisation, roleName, us
 	}
 
 	return &GrafanaCloudKey{
-		Name:  key.Name,
-		Token: key.Token,
-		User:  user,
+		Name:             key.Name,
+		Token:            key.Token,
+		User:             config.User,
+		PrometheusUser:   config.PrometheusUser,
+		PrometheusURL:    config.PrometheusURL,
+		LokiUser:         config.LokiUser,
+		LokiURL:          config.LokiURL,
+		TempoUser:        config.TempoUser,
+		TempoURL:         config.TempoURL,
+		AlertmanagerUser: config.AlertmanagerUser,
+		AlertmanagerURL:  config.AlertmanagerURL,
+		GraphiteUser:     config.GraphiteUser,
+		GraphiteURL:      config.GraphiteURL,
 	}, nil
 }

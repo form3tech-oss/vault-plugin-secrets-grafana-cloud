@@ -3,9 +3,10 @@ package secretsengine
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/vault/sdk/logical"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 const (
@@ -55,6 +56,56 @@ func TestConfig(t *testing.T) {
 			assert.Error(t, err)
 		})
 
+		t.Run("Create Configuration - invalid prometheus url", func(t *testing.T) {
+			err := testConfigCreate(b, reqStorage, map[string]interface{}{
+				"key":            key,
+				"url":            configUrl,
+				"organisation":   organisation,
+				"prometheus_url": "/p",
+			})
+			assert.Error(t, err)
+		})
+
+		t.Run("Create Configuration - invalid loki url", func(t *testing.T) {
+			err := testConfigCreate(b, reqStorage, map[string]interface{}{
+				"key":          key,
+				"url":          configUrl,
+				"organisation": organisation,
+				"loki_url":     "/l",
+			})
+			assert.Error(t, err)
+		})
+
+		t.Run("Create Configuration - invalid tempo url", func(t *testing.T) {
+			err := testConfigCreate(b, reqStorage, map[string]interface{}{
+				"key":          key,
+				"url":          configUrl,
+				"organisation": organisation,
+				"tempo_url":    "/t",
+			})
+			assert.Error(t, err)
+		})
+
+		t.Run("Create Configuration - invalid alertmanager url", func(t *testing.T) {
+			err := testConfigCreate(b, reqStorage, map[string]interface{}{
+				"key":              key,
+				"url":              configUrl,
+				"organisation":     organisation,
+				"alertmanager_url": "/a",
+			})
+			assert.Error(t, err)
+		})
+
+		t.Run("Create Configuration - invalid graphite url", func(t *testing.T) {
+			err := testConfigCreate(b, reqStorage, map[string]interface{}{
+				"key":          key,
+				"url":          configUrl,
+				"organisation": organisation,
+				"graphite_url": "/g",
+			})
+			assert.Error(t, err)
+		})
+
 		t.Run("Create Configuration - empty organisation", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":          key,
@@ -66,20 +117,39 @@ func TestConfig(t *testing.T) {
 
 		t.Run("Read Configuration - pass", func(t *testing.T) {
 			err := testConfigRead(b, reqStorage, map[string]interface{}{
-				"key":          key,
-				"url":          configUrl,
-				"organisation": organisation,
-				"user":         "",
+				"key":               key,
+				"url":               configUrl,
+				"organisation":      organisation,
+				"user":              "",
+				"prometheus_user":   "",
+				"prometheus_url":    "",
+				"loki_user":         "",
+				"loki_url":          "",
+				"tempo_user":        "",
+				"tempo_url":         "",
+				"alertmanager_user": "",
+				"alertmanager_url":  "",
+				"graphite_user":     "",
+				"graphite_url":      "",
 			})
 			assert.NoError(t, err)
 		})
 
-		t.Run("Update Configuration - pass", func(t *testing.T) {
+		t.Run("Update Configuration (set users and urls) - pass", func(t *testing.T) {
 			err := testConfigUpdate(b, reqStorage, map[string]interface{}{
-				"key":          key,
-				"url":          "http://grafanacloud:19090",
-				"organisation": organisation1,
-				"user":         "1234",
+				"key":               key,
+				"url":               "http://grafanacloud:19090",
+				"organisation":      organisation1,
+				"user":              "1",
+				"prometheus_url":    "http://prometheus",
+				"loki_user":         "2",
+				"loki_url":          "http://loki",
+				"tempo_user":        "3",
+				"tempo_url":         "http://tempo",
+				"alertmanager_user": "4",
+				"alertmanager_url":  "http://alertmanager",
+				"graphite_user":     "5",
+				"graphite_url":      "http://graphite",
 			})
 			assert.NoError(t, err)
 		})
@@ -91,12 +161,52 @@ func TestConfig(t *testing.T) {
 			assert.Error(t, err)
 		})
 
-		t.Run("Read Updated Configuration - pass", func(t *testing.T) {
+		t.Run("Read Updated Configuration (set users and urls) - pass", func(t *testing.T) {
 			err := testConfigRead(b, reqStorage, map[string]interface{}{
-				"key":          key,
-				"url":          "http://grafanacloud:19090",
-				"organisation": organisation1,
-				"user":         "1234",
+				"key":               key,
+				"url":               "http://grafanacloud:19090",
+				"organisation":      organisation1,
+				"user":              "1",
+				"prometheus_user":   "",
+				"prometheus_url":    "http://prometheus",
+				"loki_user":         "2",
+				"loki_url":          "http://loki",
+				"tempo_user":        "3",
+				"tempo_url":         "http://tempo",
+				"alertmanager_user": "4",
+				"alertmanager_url":  "http://alertmanager",
+				"graphite_user":     "5",
+				"graphite_url":      "http://graphite",
+			})
+			assert.NoError(t, err)
+		})
+
+		t.Run("Update Configuration (set prometheus_user) - pass", func(t *testing.T) {
+			err := testConfigUpdate(b, reqStorage, map[string]interface{}{
+				"key":             key,
+				"url":             "http://grafanacloud:19090",
+				"organisation":    organisation1,
+				"prometheus_user": "6",
+			})
+			assert.NoError(t, err)
+		})
+
+		t.Run("Read Updated Configuration (set prometheus_user) - pass", func(t *testing.T) {
+			err := testConfigRead(b, reqStorage, map[string]interface{}{
+				"key":               key,
+				"url":               "http://grafanacloud:19090",
+				"organisation":      organisation1,
+				"user":              "6",
+				"prometheus_user":   "6",
+				"prometheus_url":    "http://prometheus",
+				"loki_user":         "2",
+				"loki_url":          "http://loki",
+				"tempo_user":        "3",
+				"tempo_url":         "http://tempo",
+				"alertmanager_user": "4",
+				"alertmanager_url":  "http://alertmanager",
+				"graphite_user":     "5",
+				"graphite_url":      "http://graphite",
 			})
 			assert.NoError(t, err)
 		})

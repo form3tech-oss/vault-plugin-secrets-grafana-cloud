@@ -41,7 +41,17 @@ To configure the plugin you will need the following details of the grafana cloud
 | `organisation`    | The organisation name in grafana cloud (e.g. https://grafana.com/orgs/<organisation>)                                                                                                           |
 | `key`             | An admin API key that is used by the plugin authenticate with the grafana cloud api                                                                                                             | 
 | `url`             | The url or the grafana cloud api (usually `https://grafana.com/api/`)                                                                                                                           | 
-| `user` (optional) | The user ID that is used to authenticate with the grafana cloud prometheus endpoint. There is only one of these per organisation see the grafana cloud organisation dashboard for more details. | 
+| `user` (optional) | (Deprecated) The user ID that is used to authenticate with the grafana cloud prometheus endpoint. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `prometheus_user` (optional) | The user ID that is used to authenticate with the grafana cloud prometheus endpoint. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `prometheus_url` (optional) | The URL at which Prometheus can be accessed. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `loki_user` (optional) | The user ID that is used to authenticate with the grafana cloud loki endpoint. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `loki_url` (optional) | The URL at which Loki can be accessed. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `tempo_user` (optional) | The user ID that is used to authenticate with the grafana cloud tempo endpoint. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `tempo_url` (optional) | The URL at which Tempo can be accessed. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `alertmanager_user` (optional) | The user ID that is used to authenticate with the grafana cloud alertmanager endpoint. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `alertmanager_url` (optional) | The URL at which Alertmanager can be accessed. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `graphite_user` (optional) | The user ID that is used to authenticate with the grafana cloud graphite endpoint. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
+| `graphite_url` (optional) | The URL at which Graphite can be accessed. There is only one of these per stack see the grafana cloud stack dashboard for more details. | 
 
 Configure the plugin with the details of the grafana cloud organisation:
 
@@ -71,6 +81,8 @@ Valid values for `gc_role` are `Viewer`, `Admin`, `Editor`, `MetricsPublisher`, 
 
 2. Retrieve a new grafana cloud API key from Vault
 
+Any user/url configuration provided to the backend will be populated on the credential.
+
 ```shell
 vault read grafanacloud/creds/examplerole 
 
@@ -88,4 +100,18 @@ user               $CONFIGURED_USER_ID
 ```shell
 # List stacks
 curl -H "Authorization: Bearer $GRAFANA_CLOUD_TOKEN" https://grafana.com/api/orgs/<org_slug>/instances
+```
+
+## Testing
+
+Tests can be run using `make test`.
+
+To run the integration tests, you need to set some environment variables:
+
+```
+VAULT_ACC=1
+TEST_GRAFANA_CLOUD_ORGANISATION=my-org
+TEST_GRAFANA_CLOUD_API_KEY=<token>
+TEST_GRAFANA_CLOUD_URL=https://grafana.com/api
+TEST_GRAFANA_CLOUD_CA_TAR_PATH=<optional path to tar archive containing CA file if required for making HTTP requests from a docker container>
 ```

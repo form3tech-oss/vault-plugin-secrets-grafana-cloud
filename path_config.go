@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
-	"net/url"
 )
 
 const (
@@ -15,10 +16,20 @@ const (
 
 // grafanaConfig includes the minimum configuration required to instantiate a new GrafanaCloud client.
 type grafanaCloudConfig struct {
-	Organisation string `json:"organisation"`
-	Key          string `json:"key"`
-	URL          string `json:"url"`
-	User         string `json:"user"`
+	Organisation     string `json:"organisation"`
+	Key              string `json:"key"`
+	URL              string `json:"url"`
+	User             string `json:"user"`
+	PrometheusUser   string `json:"prometheus_user"`
+	PrometheusURL    string `json:"prometheus_url"`
+	LokiUser         string `json:"loki_user"`
+	LokiURL          string `json:"loki_url"`
+	TempoUser        string `json:"tempo_user"`
+	TempoURL         string `json:"tempo_url"`
+	AlertmanagerUser string `json:"alertmanager_user"`
+	AlertmanagerURL  string `json:"alertmanager_url"`
+	GraphiteUser     string `json:"graphite_user"`
+	GraphiteURL      string `json:"graphite_url"`
 }
 
 // pathConfig extends the Vault API with a `/config`
@@ -60,10 +71,101 @@ func pathConfig(b *grafanaCloudBackend) *framework.Path {
 			},
 			"user": {
 				Type:        framework.TypeString,
-				Description: "The User that is needed to interact with prometheus, if set this is returned alongside every issued credential",
+				Description: "(Deprecated) The User that is needed to interact with prometheus, if set this is returned alongside every issued credential",
 				Required:    false,
+				Deprecated:  true,
 				DisplayAttrs: &framework.DisplayAttributes{
 					Name:      "User",
+					Sensitive: true,
+				},
+			},
+			"prometheus_user": {
+				Type:        framework.TypeString,
+				Description: "The User that is needed to interact with prometheus, if set this is returned alongside every issued credential. This will also set 'user' for backwards compatibility",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Prometheus User",
+					Sensitive: true,
+				},
+			},
+			"prometheus_url": {
+				Type:        framework.TypeString,
+				Description: "The URL at which Prometheus can be accessed, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Prometheus URL",
+					Sensitive: true,
+				},
+			},
+			"loki_user": {
+				Type:        framework.TypeString,
+				Description: "The User that is needed to interact with loki, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Loki User",
+					Sensitive: true,
+				},
+			},
+			"loki_url": {
+				Type:        framework.TypeString,
+				Description: "The URL at which Loki can be accessed, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Loki URL",
+					Sensitive: true,
+				},
+			},
+			"tempo_user": {
+				Type:        framework.TypeString,
+				Description: "The User that is needed to interact with tempo, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Tempo User",
+					Sensitive: true,
+				},
+			},
+			"tempo_url": {
+				Type:        framework.TypeString,
+				Description: "The URL at which Tempo can be accessed, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Tempo URL",
+					Sensitive: true,
+				},
+			},
+			"alertmanager_user": {
+				Type:        framework.TypeString,
+				Description: "The User that is needed to interact with alertmanager, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Alertmanager User",
+					Sensitive: true,
+				},
+			},
+			"alertmanager_url": {
+				Type:        framework.TypeString,
+				Description: "The URL at which Alertmanager can be accessed, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Alertmanager URL",
+					Sensitive: true,
+				},
+			},
+			"graphite_user": {
+				Type:        framework.TypeString,
+				Description: "The User that is needed to interact with graphite, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Graphite User",
+					Sensitive: true,
+				},
+			},
+			"graphite_url": {
+				Type:        framework.TypeString,
+				Description: "The URL at which Graphite can be accessed, if set this is returned alongside every issued credential",
+				Required:    false,
+				DisplayAttrs: &framework.DisplayAttributes{
+					Name:      "Graphite URL",
 					Sensitive: true,
 				},
 			},
@@ -125,10 +227,20 @@ func (b *grafanaCloudBackend) pathConfigRead(ctx context.Context, req *logical.R
 
 	return &logical.Response{
 		Data: map[string]interface{}{
-			"organisation": config.Organisation,
-			"key":          config.Key,
-			"url":          config.URL,
-			"user":         config.User,
+			"organisation":      config.Organisation,
+			"key":               config.Key,
+			"url":               config.URL,
+			"user":              config.User,
+			"prometheus_user":   config.PrometheusUser,
+			"prometheus_url":    config.PrometheusURL,
+			"loki_user":         config.LokiUser,
+			"loki_url":          config.LokiURL,
+			"tempo_user":        config.TempoUser,
+			"tempo_url":         config.TempoURL,
+			"alertmanager_user": config.AlertmanagerUser,
+			"alertmanager_url":  config.AlertmanagerURL,
+			"graphite_user":     config.GraphiteUser,
+			"graphite_url":      config.GraphiteURL,
 		},
 	}, nil
 }
@@ -175,6 +287,63 @@ func (b *grafanaCloudBackend) pathConfigWrite(ctx context.Context, req *logical.
 
 	if user, ok := data.GetOk("user"); ok {
 		config.User = user.(string)
+	}
+
+	if user, ok := data.GetOk("prometheus_user"); ok {
+		config.PrometheusUser = user.(string)
+		// Set user for backwards compatibility.
+		config.User = user.(string)
+	}
+
+	if user, ok := data.GetOk("loki_user"); ok {
+		config.LokiUser = user.(string)
+	}
+
+	if user, ok := data.GetOk("tempo_user"); ok {
+		config.TempoUser = user.(string)
+	}
+
+	if user, ok := data.GetOk("alertmanager_user"); ok {
+		config.AlertmanagerUser = user.(string)
+	}
+
+	if user, ok := data.GetOk("graphite_user"); ok {
+		config.GraphiteUser = user.(string)
+	}
+
+	if prometheusUrl, ok := data.GetOk("prometheus_url"); ok {
+		config.PrometheusURL = prometheusUrl.(string)
+		if u, err := url.ParseRequestURI(config.PrometheusURL); err != nil || !u.IsAbs() {
+			return nil, fmt.Errorf("invalid prometheus_url in configuration")
+		}
+	}
+
+	if lokiUrl, ok := data.GetOk("loki_url"); ok {
+		config.LokiURL = lokiUrl.(string)
+		if u, err := url.ParseRequestURI(config.LokiURL); err != nil || !u.IsAbs() {
+			return nil, fmt.Errorf("invalid loki_url in configuration")
+		}
+	}
+
+	if tempoUrl, ok := data.GetOk("tempo_url"); ok {
+		config.TempoURL = tempoUrl.(string)
+		if u, err := url.ParseRequestURI(config.TempoURL); err != nil || !u.IsAbs() {
+			return nil, fmt.Errorf("invalid tempo_url in configuration")
+		}
+	}
+
+	if AlertmanagerUrl, ok := data.GetOk("alertmanager_url"); ok {
+		config.AlertmanagerURL = AlertmanagerUrl.(string)
+		if u, err := url.ParseRequestURI(config.AlertmanagerURL); err != nil || !u.IsAbs() {
+			return nil, fmt.Errorf("invalid alertmanager_url in configuration")
+		}
+	}
+
+	if graphiteURL, ok := data.GetOk("graphite_url"); ok {
+		config.GraphiteURL = graphiteURL.(string)
+		if u, err := url.ParseRequestURI(config.GraphiteURL); err != nil || !u.IsAbs() {
+			return nil, fmt.Errorf("invalid graphite_url in configuration")
+		}
 	}
 
 	entry, err := logical.StorageEntryJSON(configStoragePath, config)

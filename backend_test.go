@@ -15,6 +15,7 @@ const (
 	envVarGrafanaCloudOrganisation = "TEST_GRAFANA_CLOUD_ORGANISATION"
 	envVarGrafanaCloudAPIKey       = "TEST_GRAFANA_CLOUD_API_KEY"
 	envVarGrafanaCloudURL          = "TEST_GRAFANA_CLOUD_URL"
+	envVarCATarPath                = "TEST_GRAFANA_CLOUD_CA_TAR_PATH"
 )
 
 // getTestBackend will help you construct a test backend object.
@@ -44,10 +45,19 @@ var runAcceptanceTests = os.Getenv(envVarRunAccTests) == "1"
 // resources
 type testEnv struct {
 	// Password string
-	Organisation string
-	Key          string
-	URL          string
-	User         string
+	Organisation     string
+	Key              string
+	URL              string
+	PrometheusUser   string
+	PrometheusURL    string
+	LokiUser         string
+	LokiURL          string
+	TempoUser        string
+	TempoURL         string
+	AlertmanagerUser string
+	AlertmanagerURL  string
+	GraphiteUser     string
+	GraphiteURL      string
 
 	Backend logical.Backend
 	Context context.Context
@@ -69,10 +79,19 @@ func (e *testEnv) AddConfig(t *testing.T) {
 		Path:      "config",
 		Storage:   e.Storage,
 		Data: map[string]interface{}{
-			"organisation": e.Organisation,
-			"key":          e.Key,
-			"url":          e.URL,
-			"user":         e.User,
+			"organisation":      e.Organisation,
+			"key":               e.Key,
+			"url":               e.URL,
+			"prometheus_user":   e.PrometheusUser,
+			"prometheus_url":    e.PrometheusURL,
+			"loki_user":         e.LokiUser,
+			"loki_url":          e.LokiURL,
+			"tempo_user":        e.TempoUser,
+			"tempo_url":         e.TempoURL,
+			"alertmanager_user": e.AlertmanagerUser,
+			"alertmanager_url":  e.AlertmanagerURL,
+			"graphite_user":     e.GraphiteUser,
+			"graphite_url":      e.GraphiteURL,
 		},
 	}
 	resp, err := e.Backend.HandleRequest(e.Context, req)
@@ -109,7 +128,18 @@ func (e *testEnv) ReadUserToken(t *testing.T) {
 	require.NotNil(t, resp)
 	require.NotEmpty(t, resp.Secret.InternalData["name"])
 	require.NotNil(t, resp.Secret)
-	require.Equal(t, testUser, resp.Data["user"])
+	require.Equal(t, testPrometheusUser, resp.Data["user"])
+	require.Equal(t, testPrometheusUser, resp.Data["prometheus_user"])
+	require.Equal(t, testLokiUser, resp.Data["loki_user"])
+	require.Equal(t, testTempoUser, resp.Data["tempo_user"])
+	require.Equal(t, testAlertmanagerUser, resp.Data["alertmanager_user"])
+	require.Equal(t, testGraphiteUser, resp.Data["graphite_user"])
+
+	require.Equal(t, testPrometheusUrl, resp.Data["prometheus_url"])
+	require.Equal(t, testLokiUrl, resp.Data["loki_url"])
+	require.Equal(t, testTempoUrl, resp.Data["tempo_url"])
+	require.Equal(t, testAlertmanagerUrl, resp.Data["alertmanager_url"])
+	require.Equal(t, testGraphiteUrl, resp.Data["graphite_url"])
 
 	if e.SecretToken != "" {
 		require.NotEqual(t, e.SecretToken, resp.Data["token"])
