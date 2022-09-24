@@ -97,7 +97,15 @@ func (b *grafanaCloudBackend) getClient(ctx context.Context, s logical.Storage) 
 		config = new(grafanaCloudConfig)
 	}
 
-	b.client, err = grafanclient.New(config.URL, grafanclient.Config{
+	const apiSuffix = "api"
+	baseUrl := strings.ToLower(config.URL)
+	if strings.HasSuffix(baseUrl, apiSuffix) {
+		baseUrl = strings.TrimSuffix(baseUrl, apiSuffix)
+	} else if strings.HasSuffix(baseUrl, apiSuffix+"/") {
+		baseUrl = strings.TrimSuffix(baseUrl, apiSuffix+"/")
+	}
+
+	b.client, err = grafanclient.New(baseUrl, grafanclient.Config{
 		APIKey: config.Key,
 	})
 	if err != nil {

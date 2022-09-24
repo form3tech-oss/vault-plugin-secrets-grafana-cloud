@@ -100,9 +100,9 @@ func (e *testEnv) AddConfig(t *testing.T) {
 	require.Nil(t, err)
 }
 
-// AddUserTokenRole adds a role for the Grafana Cloud
+// AddAPIKeyRole adds a role for the Grafana Cloud
 // API token.
-func (e *testEnv) AddUserTokenRole(t *testing.T) {
+func (e *testEnv) AddAPIKeyRole(t *testing.T) {
 	req := &logical.Request{
 		Operation: logical.UpdateOperation,
 		Path:      "roles/test-user-token",
@@ -116,9 +116,9 @@ func (e *testEnv) AddUserTokenRole(t *testing.T) {
 	require.Nil(t, err)
 }
 
-// ReadUserToken retrieves the user token
+// ReadAPIKey retrieves the user token
 // based on a Vault role.
-func (e *testEnv) ReadUserToken(t *testing.T) {
+func (e *testEnv) ReadAPIKey(t *testing.T) {
 	req := &logical.Request{
 		Operation: logical.ReadOperation,
 		Path:      "creds/test-user-token",
@@ -153,9 +153,9 @@ func (e *testEnv) ReadUserToken(t *testing.T) {
 	}
 }
 
-// CleanupUserTokens removes the tokens
+// CleanupAPIKeys removes the tokens
 // when the test completes.
-func (e *testEnv) CleanupUserTokens(t *testing.T) {
+func (e *testEnv) CleanupAPIKeys(t *testing.T) {
 	if len(e.Names) == 0 {
 		t.Fatalf("expected 2 tokens, got: %d", len(e.Names))
 	}

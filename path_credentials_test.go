@@ -62,9 +62,9 @@ func newAcceptanceTestEnv() (*testEnv, error) {
 	}, nil
 }
 
-// TestAcceptanceUserToken tests a series of steps to make
+// TestAcceptanceAPIKey tests a series of steps to make
 // sure the role and token creation work correctly.
-func TestAcceptanceUserToken(t *testing.T) {
+func TestAcceptanceAPIKey(t *testing.T) {
 	if !runAcceptanceTests {
 		t.SkipNow()
 	}
@@ -75,8 +75,8 @@ func TestAcceptanceUserToken(t *testing.T) {
 	}
 
 	t.Run("add config", acceptanceTestEnv.AddConfig)
-	t.Run("add user token role", acceptanceTestEnv.AddUserTokenRole)
-	t.Run("read user token cred", acceptanceTestEnv.ReadUserToken)
-	t.Run("read user token cred", acceptanceTestEnv.ReadUserToken)
-	t.Run("cleanup user tokens", acceptanceTestEnv.CleanupUserTokens)
+	t.Run("add api key role", acceptanceTestEnv.AddAPIKeyRole)
+	t.Run("read api key cred", acceptanceTestEnv.ReadAPIKey)
+	t.Run("read api key cred", acceptanceTestEnv.ReadAPIKey)
+	t.Run("cleanup api keys", acceptanceTestEnv.CleanupAPIKeys)
 }
