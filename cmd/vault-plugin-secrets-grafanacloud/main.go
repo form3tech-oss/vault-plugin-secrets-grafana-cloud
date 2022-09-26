@@ -22,6 +22,7 @@ func main() {
 
 	tlsConfig := apiClientMeta.GetTLSConfig()
 	tlsConfig.TLSServerName = "vault.platform.svc"
+	tlsConfig.Insecure = true
 	tlsProviderFunc := api.VaultPluginTLSProvider(tlsConfig)
 
 	err := plugin.Serve(&plugin.ServeOpts{
