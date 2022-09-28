@@ -77,18 +77,18 @@ func (c *Client) CreateAPIKey(ctx context.Context, r *CreateAPIKeyInput) (*APIKe
 
 func HandleError(err error, resp *resty.Response, msg string) error {
 	if err != nil {
-		return fmt.Errorf("%s: %v", msg, err)
+		return NewClientError(msg, err)
 	}
 
 	if resp.IsError() {
-		return HttpError(msg, resp)
+		return HTTPError(msg, resp)
 	}
 
 	return nil
 }
 
-func HttpError(message string, resp *resty.Response) error {
-	return fmt.Errorf("%s. Status code %d, response: %s", message, resp.StatusCode(), resp.Body())
+func HTTPError(message string, resp *resty.Response) error {
+	return NewClientError(fmt.Sprintf("%s. Status code %d, response: %s", message, resp.StatusCode(), resp.Body()), nil)
 }
 
 type ClientOpt func(*Client)
@@ -97,7 +97,7 @@ func NewClient(baseURL, apiKey string, opts ...ClientOpt) (*Client, error) {
 	url := baseURL
 
 	if !strings.HasSuffix(url, "/") {
-		url = url + "/"
+		url += "/"
 	}
 
 	resty := resty.New().
@@ -142,7 +142,7 @@ func WithTempKeyPrefix(prefix string) ClientOpt {
 
 // We retry for two reasons:
 // 1. Grafana Cloud APIs might apply rate limiting to API requests
-// 2. Newly created Grafana Cloud Stacks don't accept requests to create Grafana API keys immediately
+// 2. Newly created Grafana Cloud Stacks don't accept requests to create Grafana API keys immediately.
 func canRetry(r *resty.Response, err error) bool {
 	return r.StatusCode() == http.StatusTooManyRequests ||
 		strings.Contains(r.String(), grafanaStarting)

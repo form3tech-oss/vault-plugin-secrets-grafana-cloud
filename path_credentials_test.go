@@ -17,14 +17,14 @@ const (
 	testTempoUser        = "3"
 	testAlertmanagerUser = "4"
 	testGraphiteUser     = "5"
-	testPrometheusUrl    = "http://prometheus"
-	testLokiUrl          = "http://loki"
-	testTempoUrl         = "http://tempo"
-	testAlertmanagerUrl  = "http://alertmanager"
-	testGraphiteUrl      = "http://graphite"
+	testPrometheusURL    = "http://prometheus"
+	testLokiURL          = "http://loki"
+	testTempoURL         = "http://tempo"
+	testAlertmanagerURL  = "http://alertmanager"
+	testGraphiteURL      = "http://graphite"
 )
 
-// newAcceptanceTestEnv creates a test environment for credentials
+// newAcceptanceTestEnv creates a test environment for credentials.
 func newAcceptanceTestEnv() (*testEnv, error) {
 	ctx := context.Background()
 
@@ -46,15 +46,15 @@ func newAcceptanceTestEnv() (*testEnv, error) {
 		Key:              os.Getenv(envVarGrafanaCloudAPIKey),
 		URL:              os.Getenv(envVarGrafanaCloudURL),
 		PrometheusUser:   testPrometheusUser,
-		PrometheusURL:    testPrometheusUrl,
+		PrometheusURL:    testPrometheusURL,
 		LokiUser:         testLokiUser,
-		LokiURL:          testLokiUrl,
+		LokiURL:          testLokiURL,
 		TempoUser:        testTempoUser,
-		TempoURL:         testTempoUrl,
+		TempoURL:         testTempoURL,
 		AlertmanagerUser: testAlertmanagerUser,
-		AlertmanagerURL:  testAlertmanagerUrl,
+		AlertmanagerURL:  testAlertmanagerURL,
 		GraphiteUser:     testGraphiteUser,
-		GraphiteURL:      testGraphiteUrl,
+		GraphiteURL:      testGraphiteURL,
 
 		Backend: b,
 		Context: ctx,

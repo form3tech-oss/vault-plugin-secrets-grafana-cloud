@@ -14,17 +14,35 @@ builds:
     goarch:
       - amd64
     main: ./cmd/vault-plugin-secrets-grafanacloud
-dockers:
-  - dockerfile: build/package/vault-plugin-secrets-grafanacloud/Dockerfile
-    image_templates:
-    - "form3tech/vault-plugin-secrets-grafanacloud:{{ .Tag }}"
-    goos: linux
-    goarch: amd64
+
+changelog:
+  skip: false
+  use: git
+  sort: asc
+
+  groups:
+    - title: Breaking Changes
+      regexp: "^.*BREAKING CHANGE[(\\w)]*:+.*$"
+      order: 0
+    - title: Features
+      regexp: "^.*feat[(\\w)]*:+.*$"
+      order: 1
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*:+.*$"
+      order: 2
+    - title: 'Enhancements'
+      regexp: "^.*(chore|build|style|refactor|perf|test)[(\\w)]*:+.*$"
+      order: 3
+    - title: Others
+      order: 999
+  
+  filters:
+    exclude:
+      - '^docs'
+      - '^ci'
+      - typo
+  
 archives:
   - format: binary
 checksum:
   algorithm: sha256
-release:
-  prerelease: auto
-changelog:
-  skip: true

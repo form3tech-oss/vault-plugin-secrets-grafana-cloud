@@ -68,7 +68,7 @@ func testAccPreCheck(t *testing.T) {
 }
 
 // testAddCA will add (if given) the CA tar to the vault container.
-func testAddCA(t *testing.T) stepwise.Step {
+func testAddCA(_ *testing.T) stepwise.Step {
 	return stepwise.Step{
 		Operation: stepwise.HelpOperation,
 		Assert: func(_ *api.Secret, _ error) error {
@@ -132,7 +132,6 @@ func copyCATarToContainer(cli client.APIClient, caPath string, container types.C
 		"/usr/local/share/ca-certificates/",
 		bytes.NewReader(caBytes),
 		types.CopyToContainerOptions{}); err != nil {
-
 		return fmt.Errorf("failed to copy file to container: %s", err.Error())
 	}
 
@@ -157,7 +156,7 @@ func updateContainerCACertificates(cli client.APIClient, container types.Contain
 	return nil
 }
 
-func testAccConfig(t *testing.T) stepwise.Step {
+func testAccConfig(_ *testing.T) stepwise.Step {
 	return stepwise.Step{
 		Operation: stepwise.UpdateOperation,
 		Path:      "config",

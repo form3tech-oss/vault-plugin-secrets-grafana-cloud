@@ -2,7 +2,6 @@ package secretsengine
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/hashicorp/vault/sdk/framework"
@@ -70,17 +69,17 @@ func (b *grafanaCloudBackend) keyRevoke(ctx context.Context, req *logical.Reques
 func (b *grafanaCloudBackend) keyRenew(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	roleRaw, ok := req.Secret.InternalData["role"]
 	if !ok {
-		return nil, fmt.Errorf("secret is missing role internal data")
+		return nil, NewInternalError("secret is missing role internal data", nil)
 	}
 
 	role := roleRaw.(string)
 	roleEntry, err := b.getRole(ctx, req.Storage, role)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving role: %w", err)
+		return nil, NewInternalError("error retrieving role", err)
 	}
 
 	if roleEntry == nil {
-		return nil, errors.New("error retrieving role: role is nil")
+		return nil, NewInternalError("error retrieving role: role is nil", nil)
 	}
 
 	resp := &logical.Response{Secret: req.Secret}
@@ -95,7 +94,8 @@ func (b *grafanaCloudBackend) keyRenew(ctx context.Context, req *logical.Request
 	return resp, nil
 }
 
-func createKey(ctx context.Context, c *client.Client, organisation, roleName string, config *grafanaCloudConfig, grafanaCloudRole string) (*GrafanaCloudKey, error) {
+func createKey(ctx context.Context, c *client.Client, organisation, roleName string, config *grafanaCloudConfig, grafanaCloudRole string,
+) (*GrafanaCloudKey, error) {
 	suffix := uuid.New().String()
 	tokenName := fmt.Sprintf("%s_%s", roleName, suffix)
 
@@ -104,7 +104,6 @@ func createKey(ctx context.Context, c *client.Client, organisation, roleName str
 		Role:         grafanaCloudRole,
 		Organisation: organisation,
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("error creating Grafana Cloud key: %w", err)
 	}

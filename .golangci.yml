@@ -1,0 +1,68 @@
+run:
+  skip-dirs:
+    - scripts
+    - vendor
+  timeout: 3m
+
+linters:
+  enable:
+    - dupl
+    - errcheck
+    - gocyclo
+    - goconst
+    - gofmt
+    - gosimple
+    - govet
+    - goimports
+    - ineffassign
+    - staticcheck
+    - typecheck
+    - unused
+    - vet
+    - asciicheck
+    - bodyclose
+    - depguard
+    - dogsled
+    - exhaustive
+    - exportloopref
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - gocritic
+    - godot
+    - godox
+    - goerr113
+    - gofumpt
+    - goheader
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - lll
+    - misspell
+    - nakedret
+    - nestif
+    - noctx
+    - nolintlint
+    - prealloc
+    - rowserrcheck
+    - sqlclosecheck
+    - stylecheck
+    - unconvert
+    - unparam
+    - whitespace
+
+linters-settings:
+  lll:
+    line-length: 160
+
+  stylecheck:
+    pkg_name: false
+    camel_name: false
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - goerr113
+        - stylecheck
+        - gochecknoglobals

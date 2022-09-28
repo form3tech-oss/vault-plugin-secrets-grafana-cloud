@@ -1,75 +1,45 @@
-include Makefile.deps
-
 .DEFAULT_GOAL := default
 
-platform := $(shell uname)
+GOLANGCI_VERSION  ?= 1.49.0
+GOIMPORTS_VERSION ?= v0.1.12
 
-GOFMT_FILES?=$$(find ./ -name '*.go' | grep -v vendor)
-DOCKER_IMG ?= form3tech/vault-plugin-secrets-grafanacloud
-TRAVIS_TAG ?= develop
-SHELL := /bin/bash
-PATH := $(PATH):$(PWD)/bin
+default: lint test build
 
-default: build test
-
-build: errcheck vet
+.PHONY: build
+build:
 	@find ./cmd/* -maxdepth 1 -type d -exec go install "{}" \;
 
-install-lint:
-	@go get -u golang.org/x/lint/golint
-
+.PHONY: test
 test:
 	@echo "executing tests..."
 	@go test -v ./...
 
-vet:
-	@echo "go vet ."
-	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \
-		echo ""; \
-		echo "Vet found suspicious constructs. Please check the reported constructs"; \
-		echo "and fix them if necessary before submitting the code for review."; \
-		exit 1; \
-	fi
-
-goimports:
+.PHONY: goimports
+goimports: tools/goimports
 	goimports -w $(GOFMT_FILES)
 
-errcheck:
-	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
-
-vendor-status:
-	@govendor status
-
-docker-compose:
-	@sh -c "'$(CURDIR)/setup-local.sh'"
-
+.PHONY: install-vault
 install-vault:
 	@wget https://releases.hashicorp.com/vault/1.0.3/vault_1.0.3_darwin_amd64.zip
 	@unzip vault_1.0.3_darwin_amd64.zip
 	@mv vault /usr/local/bin
 	@rm vault_1.0.3_darwin_amd64.zip
 
-generate:
-	@go install github.com/golang/mock/mockgen@latest
-	@go generate ./...
+.PHONY: lint
+lint: tools/golangci-lint
+	@echo "==> Running golangci-lint..."
+	@tools/golangci-lint run
 
-lint:
-	@echo "go lint ."
-	@golint $$(go list ./... | grep -v vendor/) ; if [ $$? -eq 1 ]; then \
-		echo ""; \
-		echo "Lint found errors in the source code. Please check the reported errors"; \
-		echo "and fix them if necessary before submitting the code for review."; \
-		exit 1; \
-	fi
+.PHONY: calculate-next-semver
+calculate-next-semver:
+	@bash -e -o pipefail -c '(source ./scripts/calculate-next-version.sh && echo $${FULL_TAG}) | tail -n 1'
 
-build:
-	@echo "==> Building docker image..."
-	goreleaser --rm-dist --snapshot
+.PHONY: tools/golangci-lint
+tools/golangci-lint:
+	@echo "==> Installing golangci-lint..."
+	@./scripts/install-golangci-lint.sh $(GOLANGCI_VERSION)
 
-release:
-	@echo "==> Logging in to the docker registry..."
-	echo "$(DOCKER_PASSWORD)" | docker login -u "$(DOCKER_USERNAME)" --password-stdin
-	@echo "==> Pushing built image..."
-	goreleaser --rm-dist
-
-.PHONY: build test vet goimports errcheck lint vendor-status default generate publish docker-build release
+.PHONY: tools/goimports
+tools/goimports:
+	@echo "==> Installing goimports..."
+	@GOBIN=$$(pwd)/tools/ go install golang.org/x/tools/cmd/goimports@$(GOIMPORTS_VERSION)

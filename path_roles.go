@@ -21,7 +21,7 @@ This path allows you to read and write roles used to generate Grafana Cloud toke
 
 // grafanaCloudRoleEntry defines the data required
 // for a Vault role to access and call the Grafana Cloud
-// token endpoints
+// token endpoints.
 type grafanaCloudRoleEntry struct {
 	GrafanaCloudRole string        `json:"gc_role"`
 	TTL              time.Duration `json:"ttl"`
@@ -29,7 +29,9 @@ type grafanaCloudRoleEntry struct {
 }
 
 // grafanaCloudValidRoles valid roles in Grafana Cloud
-// to whom keys may be generated
+// to whom keys may be generated.
+//
+//nolint:gochecknoglobals // required for verifying role is valid.
 var grafanaCloudValidRoles = map[string]bool{
 	"Viewer":           true,
 	"Admin":            true,
@@ -38,7 +40,7 @@ var grafanaCloudValidRoles = map[string]bool{
 	"PluginPublisher":  true,
 }
 
-// toResponseData returns response data for a role
+// toResponseData returns response data for a role.
 func (r *grafanaCloudRoleEntry) toResponseData() map[string]interface{} {
 	respData := map[string]interface{}{
 		"gc_role": r.GrafanaCloudRole,
@@ -109,7 +111,7 @@ func pathRole(b *grafanaCloudBackend) []*framework.Path {
 
 func (b *grafanaCloudBackend) getRole(ctx context.Context, s logical.Storage, name string) (*grafanaCloudRoleEntry, error) {
 	if name == "" {
-		return nil, fmt.Errorf("missing role name")
+		return nil, NewInvalidConfigurationError("missing role name", nil)
 	}
 
 	entry, err := s.Get(ctx, "roles/"+name)
@@ -136,6 +138,7 @@ func (b *grafanaCloudBackend) pathRolesRead(ctx context.Context, req *logical.Re
 	}
 
 	if entry == nil {
+		//nolint:godox
 		// TODO: shouldn't we return a Response or an error here?
 		return nil, nil
 	}
@@ -152,7 +155,7 @@ func setRole(ctx context.Context, s logical.Storage, name string, roleEntry *gra
 	}
 
 	if entry == nil {
-		return fmt.Errorf("failed to create storage entry for role")
+		return NewInternalError("failed to create storage entry for role", nil)
 	}
 
 	if err := s.Put(ctx, entry); err != nil {
@@ -185,7 +188,7 @@ func (b *grafanaCloudBackend) pathRolesWrite(ctx context.Context, req *logical.R
 			return logical.ErrorResponse(fmt.Sprintf("provided gc_role %s is not valid", roleEntry.GrafanaCloudRole)), nil
 		}
 	} else if !ok && createOperation {
-		return nil, fmt.Errorf("missing gc_role value")
+		return nil, NewInvalidConfigurationError("missing gc_role value", nil)
 	}
 
 	if ttlRaw, ok := d.GetOk("ttl"); ok {
