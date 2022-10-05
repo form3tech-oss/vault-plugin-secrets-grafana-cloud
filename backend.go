@@ -12,7 +12,7 @@ import (
 
 const grafanaCloudKeyType = "GrafanaCloudKey"
 
-// CreateGrafanaAPIKeyInput grafana cloud data structure to create api credentials
+// CreateGrafanaAPIKeyInput grafana cloud data structure to create api credentials.
 type CreateGrafanaAPIKeyInput struct {
 	Name          string `json:"name"`
 	Role          string `json:"role"`
@@ -20,7 +20,7 @@ type CreateGrafanaAPIKeyInput struct {
 	Stack         string `json:"-"`
 }
 
-// Factory returns a new backend as logical.Backend
+// Factory returns a new backend as logical.Backend.
 func Factory(ctx context.Context, conf *logical.BackendConfig) (logical.Backend, error) {
 	b := backend()
 	if err := b.Setup(ctx, conf); err != nil {
@@ -36,7 +36,7 @@ type grafanaCloudBackend struct {
 }
 
 func backend() *grafanaCloudBackend {
-	var b = grafanaCloudBackend{}
+	b := grafanaCloudBackend{}
 
 	b.Backend = &framework.Backend{
 		Help: strings.TrimSpace(backendHelp),

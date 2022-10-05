@@ -17,7 +17,6 @@ func main() {
 	if err := flags.Parse(os.Args[1:]); err != nil {
 		logger.Error("plugin shutting down", "error", err)
 		os.Exit(1)
-
 	}
 
 	tlsConfig := apiClientMeta.GetTLSConfig()

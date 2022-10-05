@@ -11,7 +11,7 @@ import (
 
 const (
 	key           = "1234567"
-	configUrl     = "http://localhost:19090/"
+	configURL     = "http://localhost:19090/"
 	organisation  = "testorg"
 	organisation1 = "testorg1"
 )
@@ -23,7 +23,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Create Configuration - pass", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":          key,
-				"url":          configUrl,
+				"url":          configURL,
 				"organisation": organisation,
 			})
 			assert.NoError(t, err)
@@ -32,7 +32,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Create Configuration - empty key", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":          "",
-				"url":          configUrl,
+				"url":          configURL,
 				"organisation": organisation,
 			})
 			assert.Error(t, err)
@@ -59,7 +59,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Create Configuration - invalid prometheus url", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":            key,
-				"url":            configUrl,
+				"url":            configURL,
 				"organisation":   organisation,
 				"prometheus_url": "/p",
 			})
@@ -69,7 +69,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Create Configuration - invalid loki url", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":          key,
-				"url":          configUrl,
+				"url":          configURL,
 				"organisation": organisation,
 				"loki_url":     "/l",
 			})
@@ -79,7 +79,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Create Configuration - invalid tempo url", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":          key,
-				"url":          configUrl,
+				"url":          configURL,
 				"organisation": organisation,
 				"tempo_url":    "/t",
 			})
@@ -89,7 +89,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Create Configuration - invalid alertmanager url", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":              key,
-				"url":              configUrl,
+				"url":              configURL,
 				"organisation":     organisation,
 				"alertmanager_url": "/a",
 			})
@@ -99,7 +99,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Create Configuration - invalid graphite url", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":          key,
-				"url":          configUrl,
+				"url":          configURL,
 				"organisation": organisation,
 				"graphite_url": "/g",
 			})
@@ -109,7 +109,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Create Configuration - empty organisation", func(t *testing.T) {
 			err := testConfigCreate(b, reqStorage, map[string]interface{}{
 				"key":          key,
-				"url":          configUrl,
+				"url":          configURL,
 				"organisation": "",
 			})
 			assert.Error(t, err)
@@ -118,7 +118,7 @@ func TestConfig(t *testing.T) {
 		t.Run("Read Configuration - pass", func(t *testing.T) {
 			err := testConfigRead(b, reqStorage, map[string]interface{}{
 				"key":               key,
-				"url":               configUrl,
+				"url":               configURL,
 				"organisation":      organisation,
 				"user":              "",
 				"prometheus_user":   "",
@@ -225,7 +225,6 @@ func testConfigCreate(b logical.Backend, s logical.Storage, d map[string]interfa
 		Data:      d,
 		Storage:   s,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -242,7 +241,6 @@ func testConfigDelete(b logical.Backend, s logical.Storage) error {
 		Path:      configStoragePath,
 		Storage:   s,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -260,7 +258,6 @@ func testConfigUpdate(b logical.Backend, s logical.Storage, d map[string]interfa
 		Data:      d,
 		Storage:   s,
 	})
-
 	if err != nil {
 		return err
 	}
@@ -277,7 +274,6 @@ func testConfigRead(b logical.Backend, s logical.Storage, expected map[string]in
 		Path:      configStoragePath,
 		Storage:   s,
 	})
-
 	if err != nil {
 		return err
 	}

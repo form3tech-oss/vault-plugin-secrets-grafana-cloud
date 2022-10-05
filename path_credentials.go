@@ -2,8 +2,6 @@ package secretsengine
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
@@ -32,10 +30,12 @@ func pathCredentials(b *grafanaCloudBackend) *framework.Path {
 	}
 }
 
+//nolint:gosec // help string, not credential.
 const pathCredentialsHelpSyn = `
 Generate a Grafana Cloud API key from a specific Vault role.
 `
 
+//nolint:gosec // help string, not credential.
 const pathCredentialsHelpDesc = `
 This path generates a Grafana Cloud API key based on a particular role.
 `
@@ -48,24 +48,26 @@ func (b *grafanaCloudBackend) createKey(ctx context.Context, s logical.Storage, 
 
 	config, err := getConfig(ctx, s)
 	if err != nil {
-		return nil, fmt.Errorf("error reading secrets engine configuration: %w", err)
+		return nil, NewInternalError("error reading secrets engine configuration", err)
 	}
 
 	var token *GrafanaCloudKey
 	token, err = createKey(ctx, client, config.Organisation, roleName, config, roleEntry.GrafanaCloudRole)
 
 	if err != nil {
-		return nil, fmt.Errorf("error creating Grafana Cloud token: %w", err)
+		return nil, NewInternalError("error creating Grafana Cloud token", err)
 	}
 
 	if token == nil {
-		return nil, errors.New("error creating Grafana Cloud token")
+		return nil, NewInternalError("error creating Grafana Cloud token", nil)
 	}
 
 	return token, nil
 }
 
-func (b *grafanaCloudBackend) createUserCreds(ctx context.Context, req *logical.Request, roleName string, role *grafanaCloudRoleEntry) (*logical.Response, error) {
+func (b *grafanaCloudBackend) createUserCreds(ctx context.Context, req *logical.Request, roleName string,
+	role *grafanaCloudRoleEntry,
+) (*logical.Response, error) {
 	key, err := b.createKey(ctx, req.Storage, roleName, role)
 	if err != nil {
 		return nil, err
@@ -139,11 +141,11 @@ func (b *grafanaCloudBackend) pathCredentialsRead(ctx context.Context, req *logi
 
 	roleEntry, err := b.getRole(ctx, req.Storage, roleName)
 	if err != nil {
-		return nil, fmt.Errorf("error retrieving role: %w", err)
+		return nil, NewInternalError("error retrieving role", err)
 	}
 
 	if roleEntry == nil {
-		return nil, errors.New("error retrieving role: role is nil")
+		return nil, NewInternalError("error retrieving role: role is nil", nil)
 	}
 
 	return b.createUserCreds(ctx, req, roleName, roleEntry)

@@ -154,7 +154,7 @@ func TestUserRole(t *testing.T) {
 	})
 }
 
-// Utility function to create a role while, returning any response (including errors)
+// Utility function to create a role while, returning any response (including errors).
 func testTokenRoleCreate(t *testing.T, b *grafanaCloudBackend, s logical.Storage, roleName string, d map[string]interface{}) (*logical.Response, error) {
 	t.Helper()
 	resp, err := b.HandleRequest(context.Background(), &logical.Request{
@@ -163,7 +163,6 @@ func testTokenRoleCreate(t *testing.T, b *grafanaCloudBackend, s logical.Storage
 		Data:      d,
 		Storage:   s,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +170,7 @@ func testTokenRoleCreate(t *testing.T, b *grafanaCloudBackend, s logical.Storage
 	return resp, nil
 }
 
-// Utility function to update a role while, returning any response (including errors)
+// Utility function to update a role while, returning any response (including errors).
 func testTokenRoleUpdate(t *testing.T, b *grafanaCloudBackend, s logical.Storage, roleName string, d map[string]interface{}) (*logical.Response, error) {
 	t.Helper()
 	resp, err := b.HandleRequest(context.Background(), &logical.Request{
@@ -180,7 +179,6 @@ func testTokenRoleUpdate(t *testing.T, b *grafanaCloudBackend, s logical.Storage
 		Data:      d,
 		Storage:   s,
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +189,7 @@ func testTokenRoleUpdate(t *testing.T, b *grafanaCloudBackend, s logical.Storage
 	return resp, nil
 }
 
-// Utility function to read a role and return any errors
+// Utility function to read a role and return any errors.
 func testTokenRoleRead(t *testing.T, b *grafanaCloudBackend, s logical.Storage, vRole string) (*logical.Response, error) {
 	t.Helper()
 
@@ -202,7 +200,7 @@ func testTokenRoleRead(t *testing.T, b *grafanaCloudBackend, s logical.Storage, 
 	})
 }
 
-// Utility function to list roles and return any errors
+// Utility function to list roles and return any errors.
 func testTokenRoleList(t *testing.T, b *grafanaCloudBackend, s logical.Storage) (*logical.Response, error) {
 	t.Helper()
 	return b.HandleRequest(context.Background(), &logical.Request{
@@ -212,7 +210,7 @@ func testTokenRoleList(t *testing.T, b *grafanaCloudBackend, s logical.Storage) 
 	})
 }
 
-// Utility function to delete a role and return any errors
+// Utility function to delete a role and return any errors.
 func testTokenRoleDelete(t *testing.T, b *grafanaCloudBackend, s logical.Storage) (*logical.Response, error) {
 	t.Helper()
 	return b.HandleRequest(context.Background(), &logical.Request{

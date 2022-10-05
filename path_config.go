@@ -2,8 +2,6 @@ package secretsengine
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"net/url"
 
 	"github.com/hashicorp/vault/sdk/framework"
@@ -80,9 +78,10 @@ func pathConfig(b *grafanaCloudBackend) *framework.Path {
 				},
 			},
 			"prometheus_user": {
-				Type:        framework.TypeString,
-				Description: "The User that is needed to interact with prometheus, if set this is returned alongside every issued credential. This will also set 'user' for backwards compatibility",
-				Required:    false,
+				Type: framework.TypeString,
+				Description: "The User that is needed to interact with prometheus, if set this is returned alongside every issued credential." +
+					" This will also set 'user' for backwards compatibility",
+				Required: false,
 				DisplayAttrs: &framework.DisplayAttributes{
 					Name:      "Prometheus User",
 					Sensitive: true,
@@ -194,7 +193,7 @@ func pathConfig(b *grafanaCloudBackend) *framework.Path {
 func (b *grafanaCloudBackend) pathConfigExistenceCheck(ctx context.Context, req *logical.Request, data *framework.FieldData) (bool, error) {
 	out, err := req.Storage.Get(ctx, req.Path)
 	if err != nil {
-		return false, fmt.Errorf("existence check failed: %w", err)
+		return false, NewInternalError("existence check failed", err)
 	}
 
 	return out != nil, nil
@@ -203,7 +202,7 @@ func (b *grafanaCloudBackend) pathConfigExistenceCheck(ctx context.Context, req 
 func getConfig(ctx context.Context, s logical.Storage) (*grafanaCloudConfig, error) {
 	entry, err := s.Get(ctx, configStoragePath)
 	if err != nil {
-		return nil, err
+		return nil, NewInternalError("failed to fetch config", err)
 	}
 
 	if entry == nil {
@@ -212,7 +211,7 @@ func getConfig(ctx context.Context, s logical.Storage) (*grafanaCloudConfig, err
 
 	config := new(grafanaCloudConfig)
 	if err := entry.DecodeJSON(&config); err != nil {
-		return nil, fmt.Errorf("error reading root configuration: %w", err)
+		return nil, NewInvalidConfigurationError("error reading root configuration", err)
 	}
 
 	// return the config, we are done
@@ -222,7 +221,7 @@ func getConfig(ctx context.Context, s logical.Storage) (*grafanaCloudConfig, err
 func (b *grafanaCloudBackend) pathConfigRead(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	config, err := getConfig(ctx, req.Storage)
 	if err != nil {
-		return nil, err
+		return nil, NewInternalError("failed to fetch config", err)
 	}
 
 	return &logical.Response{
@@ -245,17 +244,18 @@ func (b *grafanaCloudBackend) pathConfigRead(ctx context.Context, req *logical.R
 	}, nil
 }
 
+//nolint:gocognit,gocyclo // func is long because it's writing each config option.
 func (b *grafanaCloudBackend) pathConfigWrite(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	config, err := getConfig(ctx, req.Storage)
 	if err != nil {
-		return nil, err
+		return nil, NewInternalError("failed to fetch config", err)
 	}
 
 	createOperation := req.Operation == logical.CreateOperation
 
 	if config == nil {
 		if !createOperation {
-			return nil, errors.New("config not found during update operation")
+			return nil, NewInvalidConfigurationError("config not found during update operation", nil)
 		}
 		config = new(grafanaCloudConfig)
 	}
@@ -265,7 +265,7 @@ func (b *grafanaCloudBackend) pathConfigWrite(ctx context.Context, req *logical.
 	}
 
 	if config.Organisation == "" && createOperation {
-		return nil, fmt.Errorf("missing organisation in configuration")
+		return nil, NewInvalidConfigurationError("missing organisation", nil)
 	}
 
 	if key, ok := data.GetOk("key"); ok {
@@ -273,16 +273,16 @@ func (b *grafanaCloudBackend) pathConfigWrite(ctx context.Context, req *logical.
 	}
 
 	if config.Key == "" && createOperation {
-		return nil, fmt.Errorf("missing key in configuration")
+		return nil, NewInvalidConfigurationError("missing key", nil)
 	}
 
-	if configuredUrl, ok := data.GetOk("url"); ok {
-		config.URL = configuredUrl.(string)
+	if configuredURL, ok := data.GetOk("url"); ok {
+		config.URL = configuredURL.(string)
 		if u, err := url.ParseRequestURI(config.URL); err != nil || !u.IsAbs() {
-			return nil, fmt.Errorf("invalid url in configuration")
+			return nil, NewInvalidConfigurationError("invalid url", err)
 		}
 	} else if !ok && createOperation {
-		return nil, fmt.Errorf("missing url in configuration")
+		return nil, NewInvalidConfigurationError("missing url", nil)
 	}
 
 	if user, ok := data.GetOk("user"); ok {
@@ -311,38 +311,38 @@ func (b *grafanaCloudBackend) pathConfigWrite(ctx context.Context, req *logical.
 		config.GraphiteUser = user.(string)
 	}
 
-	if prometheusUrl, ok := data.GetOk("prometheus_url"); ok {
-		config.PrometheusURL = prometheusUrl.(string)
+	if prometheusURL, ok := data.GetOk("prometheus_url"); ok {
+		config.PrometheusURL = prometheusURL.(string)
 		if u, err := url.ParseRequestURI(config.PrometheusURL); err != nil || !u.IsAbs() {
-			return nil, fmt.Errorf("invalid prometheus_url in configuration")
+			return nil, NewInvalidConfigurationError("invalid prometheus_url", err)
 		}
 	}
 
-	if lokiUrl, ok := data.GetOk("loki_url"); ok {
-		config.LokiURL = lokiUrl.(string)
+	if lokiURL, ok := data.GetOk("loki_url"); ok {
+		config.LokiURL = lokiURL.(string)
 		if u, err := url.ParseRequestURI(config.LokiURL); err != nil || !u.IsAbs() {
-			return nil, fmt.Errorf("invalid loki_url in configuration")
+			return nil, NewInvalidConfigurationError("invalid loki_url", err)
 		}
 	}
 
-	if tempoUrl, ok := data.GetOk("tempo_url"); ok {
-		config.TempoURL = tempoUrl.(string)
+	if tempoURL, ok := data.GetOk("tempo_url"); ok {
+		config.TempoURL = tempoURL.(string)
 		if u, err := url.ParseRequestURI(config.TempoURL); err != nil || !u.IsAbs() {
-			return nil, fmt.Errorf("invalid tempo_url in configuration")
+			return nil, NewInvalidConfigurationError("invalid tempo_url", err)
 		}
 	}
 
-	if AlertmanagerUrl, ok := data.GetOk("alertmanager_url"); ok {
-		config.AlertmanagerURL = AlertmanagerUrl.(string)
+	if AlertmanagerURL, ok := data.GetOk("alertmanager_url"); ok {
+		config.AlertmanagerURL = AlertmanagerURL.(string)
 		if u, err := url.ParseRequestURI(config.AlertmanagerURL); err != nil || !u.IsAbs() {
-			return nil, fmt.Errorf("invalid alertmanager_url in configuration")
+			return nil, NewInvalidConfigurationError("invalid alertmanager_url", err)
 		}
 	}
 
 	if graphiteURL, ok := data.GetOk("graphite_url"); ok {
 		config.GraphiteURL = graphiteURL.(string)
 		if u, err := url.ParseRequestURI(config.GraphiteURL); err != nil || !u.IsAbs() {
-			return nil, fmt.Errorf("invalid graphite_url in configuration")
+			return nil, NewInvalidConfigurationError("invalid graphite_url", err)
 		}
 	}
 
@@ -370,10 +370,10 @@ func (b *grafanaCloudBackend) pathConfigDelete(ctx context.Context, req *logical
 	return nil, err
 }
 
-// pathConfigHelpSynopsis summarizes the help text for the configuration
+// pathConfigHelpSynopsis summarizes the help text for the configuration.
 const pathConfigHelpSynopsis = `Configure the Grafana Cloud backend.`
 
-// pathConfigHelpDescription describes the help text for the configuration
+// pathConfigHelpDescription describes the help text for the configuration.
 const pathConfigHelpDescription = `
 The Grafana Cloud secret backend requires credentials for managing
 API keys that it issues.
