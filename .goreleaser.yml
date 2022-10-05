@@ -14,7 +14,6 @@ builds:
     goarch:
       - amd64
     main: ./cmd/vault-plugin-secrets-grafanacloud
-<<<<<<< HEAD
 
 changelog:
   skip: false
@@ -36,21 +35,13 @@ changelog:
       order: 3
     - title: Others
       order: 999
-  
+
   filters:
     exclude:
       - '^docs'
       - '^ci'
       - typo
-  
-=======
-dockers:
-  - dockerfile: build/package/vault-plugin-secrets-grafanacloud/Dockerfile
-    image_templates:
-    - "form3tech/vault-plugin-secrets-grafanacloud:{{ .Tag }}"
-    goos: linux
-    goarch: amd64
->>>>>>> 59c5825 (use grafana cloud client)
+
 archives:
   - format: binary
 checksum:
