@@ -21,8 +21,9 @@ func main() {
 	}
 
 	tlsConfig := apiClientMeta.GetTLSConfig()
-	tlsConfig.TLSServerName = "vault.platform.svc"
-	tlsConfig.Insecure = true
+	if e := os.Getenv("VAULT_GRAFANACLOUD_TLS_SERVER_NAME"); e != "" {
+		tlsConfig.TLSServerName = e
+	}
 	tlsProviderFunc := api.VaultPluginTLSProvider(tlsConfig)
 
 	err := plugin.Serve(&plugin.ServeOpts{
