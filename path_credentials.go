@@ -52,14 +52,15 @@ func (b *grafanaCloudBackend) createKey(ctx context.Context, s logical.Storage, 
 	}
 
 	var token *GrafanaCloudKey
-	token, err = createKey(ctx, client, config.Organisation, roleName, config, roleEntry.GrafanaCloudRole)
 
-	if err != nil {
-		return nil, NewInternalError("error creating Grafana Cloud token", err)
+	if roleEntry.APIType == CloudAPIType {
+		token, err = createCloudKey(ctx, client, config.Organisation, roleName, config, roleEntry.GrafanaCloudRole)
+	} else {
+		token, err = createHTTPKey(ctx, client, roleEntry.StackSlug, roleName, int64(roleEntry.TTL.Seconds()), config, roleEntry.GrafanaCloudRole)
 	}
 
-	if token == nil {
-		return nil, NewInternalError("error creating Grafana Cloud token", nil)
+	if err != nil || token == nil {
+		return nil, NewInternalError("error creating Grafana Cloud token", err)
 	}
 
 	return token, nil
@@ -74,6 +75,7 @@ func (b *grafanaCloudBackend) createUserCreds(ctx context.Context, req *logical.
 	}
 
 	responseData := map[string]interface{}{
+		"type":  key.Type,
 		"token": key.Token,
 	}
 
@@ -121,9 +123,17 @@ func (b *grafanaCloudBackend) createUserCreds(ctx context.Context, req *logical.
 		responseData["graphite_url"] = key.GraphiteURL
 	}
 
-	resp := b.Secret(grafanaCloudKeyType).Response(
-		responseData,
-		map[string]interface{}{"name": key.Name})
+	internalData := map[string]interface{}{
+		"id":   key.ID,
+		"name": key.Name,
+		"type": key.Type,
+	}
+
+	if key.StackSlug != "" {
+		internalData["stack_slug"] = key.StackSlug
+	}
+
+	resp := b.Secret(grafanaCloudKeyType).Response(responseData, internalData)
 
 	if role.TTL > 0 {
 		resp.Secret.TTL = role.TTL

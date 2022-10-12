@@ -68,10 +68,13 @@ vault write grafanacloud/config \
 
 After the secrets engine is configured Vault can be used to generate grafana cloud api tokens for a given role. These steps can also be performed using the [terraform provider](https://github.com/form3tech-oss/terraform-provider-vault-grafanacloud).
 
+### Cloud API keys
+
 1. Setup role
 
 ```shell
-vault write grafanacloud/roles/examplerole \
+vault write grafanacloud/roles/cloudrole \
+    api_type="Cloud" # The type of api key to generate
     gc_role="Viewer" # The desired grafana cloud role for api keys generated for this role \
     ttl="300"        # Default lease for generated api keys \
     max_ttl="3600"   # Maximum time for role (see https://learn.hashicorp.com/tutorials/vault/tokens#ttl-and-max-ttl)
@@ -84,14 +87,15 @@ Valid values for `gc_role` are `Viewer`, `Admin`, `Editor`, `MetricsPublisher`, 
 Any user/url configuration provided to the backend will be populated on the credential.
 
 ```shell
-vault read grafanacloud/creds/examplerole 
+vault read grafanacloud/creds/cloudrole 
 
 Key                Value
 ---                -----
-lease_id           hashicups/creds/examplerole/$LEASE_ID
+lease_id           hashicups/creds/cloudrole/$LEASE_ID
 lease_duration     5m
 lease_renewable    true
 token              $GRAFANA_CLOUD_TOKEN
+type               Cloud
 user               $CONFIGURED_USER_ID
 ```
 
@@ -100,6 +104,44 @@ user               $CONFIGURED_USER_ID
 ```shell
 # List stacks
 curl -H "Authorization: Bearer $GRAFANA_CLOUD_TOKEN" https://grafana.com/api/orgs/<org_slug>/instances
+```
+
+### HTTP API keys
+
+1. Setup role
+
+```shell
+vault write grafanacloud/roles/httprole \
+    api_type="HTTP"
+    stack_slug=<your-stack-slug>
+    gc_role="Viewer"
+    ttl="300"
+    max_ttl="3600"
+```
+
+Notice how HTTP API keys are scoped to a specific stack.
+
+Valid values for `gc_role` are `Viewer`, `Admin` and `Editor`.
+
+2. Retrieve a new grafana cloud HTTP API key from Vault
+
+```shell
+vault read grafanacloud/creds/httprole 
+
+Key                Value
+---                -----
+lease_id           hashicups/creds/httprole/$LEASE_ID
+lease_duration     5m
+lease_renewable    true
+token              $GRAFANA_CLOUD_HTTP_TOKEN
+type               HTTP
+```
+
+3. Use the token in the grafana cloud HTTP API
+
+```shell
+# Search folders and dashboards
+curl -H "Authorization: Bearer $GRAFANA_CLOUD_HTTP_TOKEN" https://<your-stack-slug>.grafana.net/api/search/
 ```
 
 ## Testing
@@ -112,6 +154,7 @@ To run the integration tests, you need to set some environment variables:
 VAULT_ACC=1
 TEST_GRAFANA_CLOUD_ORGANISATION=my-org
 TEST_GRAFANA_CLOUD_API_KEY=<token>
+TEST_GRAFANA_CLOUD_STACK=<stack>
 TEST_GRAFANA_CLOUD_URL=https://grafana.com/api
 TEST_GRAFANA_CLOUD_CA_TAR_PATH=<optional path to tar archive containing CA file if required for making HTTP requests from a docker container>
 ```

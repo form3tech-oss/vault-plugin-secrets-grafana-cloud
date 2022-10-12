@@ -15,14 +15,18 @@ const (
 This path allows you to read and write roles used to generate Grafana Cloud tokens.
 `
 
-	pathRoleListHelpSynopsis    = `List the existing roles in Grafana Cloud backend`
-	pathRoleListHelpDescription = `Roles will be listed by the role name.`
+	pathRoleListHelpSynopsis           = `List the existing roles in Grafana Cloud backend`
+	pathRoleListHelpDescription        = `Roles will be listed by the role name.`
+	CloudAPIType                string = "Cloud"
+	HTTPAPIType                 string = "HTTP"
 )
 
 // grafanaCloudRoleEntry defines the data required
 // for a Vault role to access and call the Grafana Cloud
 // token endpoints.
 type grafanaCloudRoleEntry struct {
+	APIType          string        `json:"api_type"`
+	StackSlug        string        `json:"stack_slug"`
 	GrafanaCloudRole string        `json:"gc_role"`
 	TTL              time.Duration `json:"ttl"`
 	MaxTTL           time.Duration `json:"max_ttl"`
@@ -40,12 +44,22 @@ var grafanaCloudValidRoles = map[string]bool{
 	"PluginPublisher":  true,
 }
 
+// grafanaCloudValidAPITypes API key types supported by Grafana Cloud.
+//
+//nolint:gochecknoglobals // required for verifying role is valid.
+var grafanaCloudValidAPITypes = map[string]bool{
+	CloudAPIType: true,
+	HTTPAPIType:  true,
+}
+
 // toResponseData returns response data for a role.
 func (r *grafanaCloudRoleEntry) toResponseData() map[string]interface{} {
 	respData := map[string]interface{}{
-		"gc_role": r.GrafanaCloudRole,
-		"ttl":     r.TTL.Seconds(),
-		"max_ttl": r.MaxTTL.Seconds(),
+		"api_type":   r.APIType,
+		"stack_slug": r.StackSlug,
+		"gc_role":    r.GrafanaCloudRole,
+		"ttl":        r.TTL.Seconds(),
+		"max_ttl":    r.MaxTTL.Seconds(),
 	}
 	return respData
 }
@@ -69,6 +83,16 @@ func pathRole(b *grafanaCloudBackend) []*framework.Path {
 					Type:        framework.TypeString,
 					Description: "The Grafana Cloud role, i.e. the key authorization level",
 					Required:    true,
+				},
+				"api_type": {
+					Type:        framework.TypeString,
+					Description: "The Grafana Cloud API type (Cloud or HTTP)",
+					Default:     CloudAPIType,
+					Required:    true,
+				},
+				"stack_slug": {
+					Type:        framework.TypeString,
+					Description: "The stack slug to create HTTP API keys for",
 				},
 				"ttl": {
 					Type:        framework.TypeDurationSecond,
@@ -182,12 +206,33 @@ func (b *grafanaCloudBackend) pathRolesWrite(ctx context.Context, req *logical.R
 
 	createOperation := req.Operation == logical.CreateOperation
 
+	if gcAPIType, ok := d.GetOk("api_type"); ok {
+		roleEntry.APIType = gcAPIType.(string)
+		if _, ok := grafanaCloudValidAPITypes[roleEntry.APIType]; !ok {
+			return logical.ErrorResponse(
+				fmt.Sprintf("provided api_type %s is not valid. Valid values are '%s' and '%s'", roleEntry.APIType, CloudAPIType, HTTPAPIType)), nil
+		}
+	} else {
+		roleEntry.APIType = CloudAPIType
+	}
+
 	if gcRole, ok := d.GetOk("gc_role"); ok {
 		roleEntry.GrafanaCloudRole = gcRole.(string)
 		if _, ok := grafanaCloudValidRoles[roleEntry.GrafanaCloudRole]; !ok {
 			return logical.ErrorResponse(fmt.Sprintf("provided gc_role %s is not valid", roleEntry.GrafanaCloudRole)), nil
 		}
-	} else if !ok && createOperation {
+	}
+
+	if stackSlug, ok := d.GetOk("stack_slug"); ok {
+		roleEntry.StackSlug = stackSlug.(string)
+		if roleEntry.APIType == HTTPAPIType && roleEntry.StackSlug == "" {
+			return logical.ErrorResponse("need to specify a stack_slug for HTTP API keys."), nil
+		}
+	} else if roleEntry.APIType == HTTPAPIType {
+		return logical.ErrorResponse("need to specify a stack_slug for HTTP API keys."), nil
+	}
+
+	if !ok && createOperation {
 		return nil, NewInvalidConfigurationError("missing gc_role value", nil)
 	}
 

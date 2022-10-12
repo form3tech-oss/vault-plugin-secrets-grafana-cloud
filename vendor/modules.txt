@@ -73,7 +73,6 @@ github.com/evanphx/json-patch/v5
 github.com/fatih/color
 # github.com/go-resty/resty/v2 v2.7.0
 ## explicit; go 1.11
-github.com/go-resty/resty/v2
 # github.com/gogo/protobuf v1.3.1
 ## explicit
 github.com/gogo/protobuf/proto
@@ -92,7 +91,7 @@ github.com/golang/snappy
 # github.com/google/uuid v1.3.0
 ## explicit
 github.com/google/uuid
-# github.com/grafana/grafana-api-golang-client v0.11.2
+# github.com/grafana/grafana-api-golang-client v0.12.1
 ## explicit; go 1.14
 github.com/grafana/grafana-api-golang-client
 # github.com/hashicorp/errwrap v1.1.0
@@ -270,7 +269,6 @@ golang.org/x/net/idna
 golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
 golang.org/x/net/proxy
-golang.org/x/net/publicsuffix
 golang.org/x/net/trace
 # golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 ## explicit

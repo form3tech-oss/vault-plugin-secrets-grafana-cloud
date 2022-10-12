@@ -45,6 +45,7 @@ func newAcceptanceTestEnv() (*testEnv, error) {
 		Organisation:     os.Getenv(envVarGrafanaCloudOrganisation),
 		Key:              os.Getenv(envVarGrafanaCloudAPIKey),
 		URL:              os.Getenv(envVarGrafanaCloudURL),
+		StackSlug:        os.Getenv(envVarGrafanaCloudStack),
 		PrometheusUser:   testPrometheusUser,
 		PrometheusURL:    testPrometheusURL,
 		LokiUser:         testLokiUser,
@@ -75,8 +76,11 @@ func TestAcceptanceAPIKey(t *testing.T) {
 	}
 
 	t.Run("add config", acceptanceTestEnv.AddConfig)
-	t.Run("add api key role", acceptanceTestEnv.AddAPIKeyRole)
-	t.Run("read api key cred", acceptanceTestEnv.ReadAPIKey)
-	t.Run("read api key cred", acceptanceTestEnv.ReadAPIKey)
-	t.Run("cleanup api keys", acceptanceTestEnv.CleanupAPIKeys)
+	t.Run("add cloud user token role", acceptanceTestEnv.AddCloudUserTokenRole)
+	t.Run("read cloud user token cred", acceptanceTestEnv.ReadCloudUserToken)
+	t.Run("read cloud user token cred", acceptanceTestEnv.ReadCloudUserToken)
+	t.Run("add http user token role", acceptanceTestEnv.AddHTTPUserTokenRole)
+	t.Run("read http user token cred", acceptanceTestEnv.ReadHTTPUserToken)
+	t.Run("read http user token cred", acceptanceTestEnv.ReadHTTPUserToken)
+	t.Run("cleanup user tokens", acceptanceTestEnv.CleanupUserTokens)
 }

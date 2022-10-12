@@ -3,6 +3,7 @@ package secretsengine
 import (
 	"context"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/go-hclog"
@@ -16,6 +17,7 @@ const (
 	//nolint:gosec // test key.
 	envVarGrafanaCloudAPIKey = "TEST_GRAFANA_CLOUD_API_KEY"
 	envVarGrafanaCloudURL    = "TEST_GRAFANA_CLOUD_URL"
+	envVarGrafanaCloudStack  = "TEST_GRAFANA_CLOUD_STACK"
 	envVarCATarPath          = "TEST_GRAFANA_CLOUD_CA_TAR_PATH"
 )
 
@@ -42,6 +44,12 @@ func getTestBackend(tb testing.TB) (*grafanaCloudBackend, logical.Storage) {
 // to your target API.
 var runAcceptanceTests = os.Getenv(envVarRunAccTests) == "1"
 
+type issuedToken struct {
+	ID   string
+	Name string
+	Type string
+}
+
 // testEnv creates an object to store and track testing environment
 // resources.
 type testEnv struct {
@@ -49,6 +57,7 @@ type testEnv struct {
 	Organisation     string
 	Key              string
 	URL              string
+	StackSlug        string
 	PrometheusUser   string
 	PrometheusURL    string
 	LokiUser         string
@@ -67,8 +76,8 @@ type testEnv struct {
 	// SecretToken tracks the API token, for checking rotations.
 	SecretToken string
 
-	// Tokens tracks the generated tokens, to make sure we clean up.
-	Names []string
+	// IssuedTokens tracks the generated tokens, to make sure we clean up.
+	IssuedTokens []issuedToken
 }
 
 // AddConfig adds the configuration to the test backend.
@@ -83,6 +92,7 @@ func (e *testEnv) AddConfig(t *testing.T) {
 			"organisation":      e.Organisation,
 			"key":               e.Key,
 			"url":               e.URL,
+			"stack_slug":        e.StackSlug,
 			"prometheus_user":   e.PrometheusUser,
 			"prometheus_url":    e.PrometheusURL,
 			"loki_user":         e.LokiUser,
@@ -100,12 +110,12 @@ func (e *testEnv) AddConfig(t *testing.T) {
 	require.Nil(t, err)
 }
 
-// AddAPIKeyRole adds a role for the Grafana Cloud
+// AddCloudUserTokenRole adds a role for the Grafana Cloud
 // API token.
-func (e *testEnv) AddAPIKeyRole(t *testing.T) {
+func (e *testEnv) AddCloudUserTokenRole(t *testing.T) {
 	req := &logical.Request{
 		Operation: logical.UpdateOperation,
-		Path:      "roles/test-user-token",
+		Path:      "roles/test-cloud-user-token",
 		Storage:   e.Storage,
 		Data: map[string]interface{}{
 			"gc_role": "Viewer",
@@ -116,12 +126,12 @@ func (e *testEnv) AddAPIKeyRole(t *testing.T) {
 	require.Nil(t, err)
 }
 
-// ReadAPIKey retrieves the user token
+// ReadCloudUserToken retrieves the user token
 // based on a Vault role.
-func (e *testEnv) ReadAPIKey(t *testing.T) {
+func (e *testEnv) ReadCloudUserToken(t *testing.T) {
 	req := &logical.Request{
 		Operation: logical.ReadOperation,
-		Path:      "creds/test-user-token",
+		Path:      "creds/test-cloud-user-token",
 		Storage:   e.Storage,
 	}
 	resp, err := e.Backend.HandleRequest(e.Context, req)
@@ -149,27 +159,91 @@ func (e *testEnv) ReadAPIKey(t *testing.T) {
 	e.SecretToken = resp.Data["token"].(string)
 
 	if t, ok := resp.Secret.InternalData["name"]; ok {
-		e.Names = append(e.Names, t.(string))
+		e.IssuedTokens = append(e.IssuedTokens, issuedToken{
+			Name: t.(string),
+			Type: CloudAPIType,
+		})
 	}
 }
 
-// CleanupAPIKeys removes the tokens
-// when the test completes.
-func (e *testEnv) CleanupAPIKeys(t *testing.T) {
-	if len(e.Names) == 0 {
-		t.Fatalf("expected 2 tokens, got: %d", len(e.Names))
+// AddHTTPUserTokenRole adds a role for the Grafana Cloud
+// API token.
+func (e *testEnv) AddHTTPUserTokenRole(t *testing.T) {
+	req := &logical.Request{
+		Operation: logical.UpdateOperation,
+		Path:      "roles/test-http-user-token",
+		Storage:   e.Storage,
+		Data: map[string]interface{}{
+			"api_type":   "HTTP",
+			"stack_slug": e.StackSlug,
+			"gc_role":    "Viewer",
+			"ttl":        "120s",
+			"max_ttl":    "300s",
+		},
+	}
+	resp, err := e.Backend.HandleRequest(e.Context, req)
+	require.Nil(t, err)
+	require.Nil(t, resp)
+}
+
+// ReadHTTPUserToken retrieves the user token
+// based on a Vault role.
+func (e *testEnv) ReadHTTPUserToken(t *testing.T) {
+	req := &logical.Request{
+		Operation: logical.ReadOperation,
+		Path:      "creds/test-http-user-token",
+		Storage:   e.Storage,
+	}
+	resp, err := e.Backend.HandleRequest(e.Context, req)
+	require.Nil(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.Secret)
+
+	require.NotEmpty(t, resp.Secret.InternalData["id"])
+	require.NotEmpty(t, resp.Secret.InternalData["name"])
+	require.NotEmpty(t, resp.Secret.InternalData["type"])
+
+	require.Equal(t, HTTPAPIType, resp.Secret.InternalData["type"])
+	require.Equal(t, e.StackSlug, resp.Secret.InternalData["stack_slug"])
+
+	if e.SecretToken != "" {
+		require.NotEqual(t, e.SecretToken, resp.Data["token"])
 	}
 
-	for _, token := range e.Names {
+	e.SecretToken = resp.Data["token"].(string)
+
+	if t, ok := resp.Secret.InternalData["name"]; ok {
+		e.IssuedTokens = append(e.IssuedTokens, issuedToken{
+			ID:   resp.Secret.InternalData["id"].(string),
+			Name: t.(string),
+			Type: HTTPAPIType,
+		})
+	}
+}
+
+// CleanupUserTokens removes the tokens
+// when the test completes.
+func (e *testEnv) CleanupUserTokens(t *testing.T) {
+	if len(e.IssuedTokens) == 0 {
+		t.Fatalf("expected issued tokens, got: %d", len(e.IssuedTokens))
+	}
+
+	for _, token := range e.IssuedTokens {
 		b := e.Backend.(*grafanaCloudBackend)
 		client, err := b.getClient(e.Context, e.Storage)
 		if err != nil {
 			t.Fatal("fatal getting client")
 		}
 
-		err = client.DeleteCloudAPIKey(e.Organisation, token)
+		if token.Type == CloudAPIType {
+			err = client.DeleteCloudAPIKey(e.Organisation, token.Name)
+		} else {
+			tokenID, _ := strconv.ParseInt(token.ID, 10, 64)
+			err = deleteHTTPAPIKey(client, e.StackSlug, tokenID)
+		}
+
 		if err != nil {
-			t.Fatalf("unexpected error deleting API key: %s", err)
+			t.Fatalf("unexpected error deleting Cloud API key: %s", err)
 		}
 	}
 }

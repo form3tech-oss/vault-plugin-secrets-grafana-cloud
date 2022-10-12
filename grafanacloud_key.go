@@ -3,16 +3,27 @@ package secretsengine
 import (
 	"context"
 	"fmt"
+	"log"
+	"strconv"
+	"time"
 
 	uuid "github.com/google/uuid"
-	grafanclient "github.com/grafana/grafana-api-golang-client"
+	grafanaclient "github.com/grafana/grafana-api-golang-client"
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
 )
 
+const (
+	tempKeyPrefix = "vault-temp"
+	tempKeyTTL    = time.Second * 30
+)
+
 type GrafanaCloudKey struct {
+	ID               string
 	Name             string
 	Token            string
+	Type             string
+	StackSlug        string
 	User             string
 	PrometheusUser   string
 	PrometheusURL    string
@@ -38,10 +49,35 @@ func (b *grafanaCloudBackend) grafanaCloudKey() *framework.Secret {
 				Type:        framework.TypeString,
 				Description: "Grafana cloud api credentials Token",
 			},
+			"type": {
+				Type:        framework.TypeString,
+				Description: "Grafana cloud api type",
+			},
 		},
 		Revoke: b.keyRevoke,
 		Renew:  b.keyRenew,
 	}
+}
+
+func deleteHTTPAPIKey(client *grafanaclient.Client, stackSlug string, tokenID int64) error {
+	instanceClient, cleanup, err := client.CreateTemporaryStackGrafanaClient(stackSlug, tempKeyPrefix, tempKeyTTL)
+	if err != nil {
+		return fmt.Errorf("error creating temporary Grafana Cloud HTTP API key: %w", err)
+	}
+
+	defer func() {
+		err := cleanup()
+		if err != nil {
+			log.Fatalf("error deleting temporary Grafana Cloud HTTP API key: %s", err)
+		}
+	}()
+
+	_, err = instanceClient.DeleteAPIKey(tokenID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (b *grafanaCloudBackend) keyRevoke(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
@@ -56,13 +92,23 @@ func (b *grafanaCloudBackend) keyRevoke(ctx context.Context, req *logical.Reques
 	}
 
 	org := config.Organisation
-	tokenID := req.Secret.InternalData["name"].(string)
-	err = c.DeleteCloudAPIKey(org, tokenID)
+	tokenName := req.Secret.InternalData["name"].(string)
+	apiType, found := req.Secret.InternalData["type"].(string)
+
+	if !found || apiType == "Cloud" {
+		err = c.DeleteCloudAPIKey(org, tokenName)
+	} else {
+		tokenID := req.Secret.InternalData["id"].(string)
+		stackSlug := req.Secret.InternalData["stack_slug"].(string)
+		id, _ := strconv.ParseInt(tokenID, 10, 64)
+		err = deleteHTTPAPIKey(c, stackSlug, id)
+	}
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &logical.Response{}, nil
+	return nil, nil
 }
 
 func (b *grafanaCloudBackend) keyRenew(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
@@ -93,15 +139,20 @@ func (b *grafanaCloudBackend) keyRenew(ctx context.Context, req *logical.Request
 	return resp, nil
 }
 
-func createKey(_ context.Context, c *grafanclient.Client, organisation, roleName string,
-	config *grafanaCloudConfig, grafanaCloudRole string,
+func createCloudKey(
+	_ context.Context,
+	c *grafanaclient.Client,
+	organisation string,
+	roleName string,
+	config *grafanaCloudConfig,
+	grafanaCloudRole string,
 ) (*GrafanaCloudKey, error) {
 	suffix := uuid.New().String()
 	tokenName := fmt.Sprintf("%s_%s", roleName, suffix)
 
 	key, err := c.CreateCloudAPIKey(
 		organisation,
-		&grafanclient.CreateCloudAPIKeyInput{
+		&grafanaclient.CreateCloudAPIKeyInput{
 			Name: tokenName,
 			Role: grafanaCloudRole,
 		})
@@ -112,6 +163,59 @@ func createKey(_ context.Context, c *grafanclient.Client, organisation, roleName
 	return &GrafanaCloudKey{
 		Name:             key.Name,
 		Token:            key.Token,
+		Type:             CloudAPIType,
+		User:             config.User,
+		PrometheusUser:   config.PrometheusUser,
+		PrometheusURL:    config.PrometheusURL,
+		LokiUser:         config.LokiUser,
+		LokiURL:          config.LokiURL,
+		TempoUser:        config.TempoUser,
+		TempoURL:         config.TempoURL,
+		AlertmanagerUser: config.AlertmanagerUser,
+		AlertmanagerURL:  config.AlertmanagerURL,
+		GraphiteUser:     config.GraphiteUser,
+		GraphiteURL:      config.GraphiteURL,
+	}, nil
+}
+
+func createHTTPKey(
+	_ context.Context,
+	c *grafanaclient.Client,
+	stackSlug string,
+	roleName string,
+	secondsToLive int64,
+	config *grafanaCloudConfig,
+	grafanaCloudRole string,
+) (*GrafanaCloudKey, error) {
+	suffix := uuid.New().String()
+	tokenName := fmt.Sprintf("%s_%s", roleName, suffix)
+	instanceClient, cleanup, err := c.CreateTemporaryStackGrafanaClient(stackSlug, tempKeyPrefix, tempKeyTTL)
+	if err != nil {
+		return nil, fmt.Errorf("error creating temporary Grafana Cloud HTTP API key: %w", err)
+	}
+
+	defer func() {
+		err := cleanup()
+		if err != nil {
+			log.Fatalf("error deleting temporary Grafana Cloud HTTP API key: %s", err)
+		}
+	}()
+
+	key, err := instanceClient.CreateAPIKey(grafanaclient.CreateAPIKeyRequest{
+		Name:          tokenName,
+		Role:          grafanaCloudRole,
+		SecondsToLive: secondsToLive,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating Grafana Cloud HTTP API key: %w", err)
+	}
+
+	return &GrafanaCloudKey{
+		ID:               strconv.FormatInt(key.ID, 10),
+		Name:             key.Name,
+		StackSlug:        stackSlug,
+		Type:             HTTPAPIType,
+		Token:            key.Key,
 		User:             config.User,
 		PrometheusUser:   config.PrometheusUser,
 		PrometheusURL:    config.PrometheusURL,

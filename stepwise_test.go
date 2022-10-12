@@ -173,9 +173,10 @@ func testAccUserRole(t *testing.T, roleName string) stepwise.Step {
 		Operation: stepwise.UpdateOperation,
 		Path:      "roles/" + roleName,
 		Data: map[string]interface{}{
-			"gc_role": "Viewer",
-			"ttl":     "1m",
-			"max_ttl": "5m",
+			"api_type": CloudAPIType,
+			"gc_role":  "Viewer",
+			"ttl":      "1m",
+			"max_ttl":  "5m",
 		},
 		Assert: func(resp *api.Secret, err error) error {
 			require.Nil(t, err)
@@ -193,6 +194,7 @@ func testAccUserRoleRead(t *testing.T, roleName string) stepwise.Step {
 			require.Nil(t, err)
 			require.NotNil(t, resp)
 			require.Equal(t, "Viewer", resp.Data["gc_role"])
+			require.Equal(t, CloudAPIType, resp.Data["api_type"])
 			return nil
 		},
 	}
