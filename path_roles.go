@@ -18,7 +18,7 @@ This path allows you to read and write roles used to generate Grafana Cloud toke
 	pathRoleListHelpSynopsis           = `List the existing roles in Grafana Cloud backend`
 	pathRoleListHelpDescription        = `Roles will be listed by the role name.`
 	CloudAPIType                string = "Cloud"
-	HTTPAPIType                 string = "HTTP"
+	GrafanaAPIType              string = "Grafana"
 )
 
 // grafanaCloudRoleEntry defines the data required
@@ -48,8 +48,8 @@ var grafanaCloudValidRoles = map[string]bool{
 //
 //nolint:gochecknoglobals // required for verifying role is valid.
 var grafanaCloudValidAPITypes = map[string]bool{
-	CloudAPIType: true,
-	HTTPAPIType:  true,
+	CloudAPIType:   true,
+	GrafanaAPIType: true,
 }
 
 // toResponseData returns response data for a role.
@@ -86,13 +86,13 @@ func pathRole(b *grafanaCloudBackend) []*framework.Path {
 				},
 				"api_type": {
 					Type:        framework.TypeString,
-					Description: "The Grafana Cloud API type (Cloud or HTTP)",
+					Description: "The Grafana Cloud API type (Cloud or Grafana)",
 					Default:     CloudAPIType,
 					Required:    true,
 				},
 				"stack_slug": {
 					Type:        framework.TypeString,
-					Description: "The stack slug to create HTTP API keys for",
+					Description: "The stack slug to create Grafana API keys for",
 				},
 				"ttl": {
 					Type:        framework.TypeDurationSecond,
@@ -210,7 +210,7 @@ func (b *grafanaCloudBackend) pathRolesWrite(ctx context.Context, req *logical.R
 		roleEntry.APIType = gcAPIType.(string)
 		if _, ok := grafanaCloudValidAPITypes[roleEntry.APIType]; !ok {
 			return logical.ErrorResponse(
-				fmt.Sprintf("provided api_type %s is not valid. Valid values are '%s' and '%s'", roleEntry.APIType, CloudAPIType, HTTPAPIType)), nil
+				fmt.Sprintf("provided api_type %s is not valid. Valid values are '%s' and '%s'", roleEntry.APIType, CloudAPIType, GrafanaAPIType)), nil
 		}
 	} else {
 		roleEntry.APIType = CloudAPIType
@@ -225,11 +225,11 @@ func (b *grafanaCloudBackend) pathRolesWrite(ctx context.Context, req *logical.R
 
 	if stackSlug, ok := d.GetOk("stack_slug"); ok {
 		roleEntry.StackSlug = stackSlug.(string)
-		if roleEntry.APIType == HTTPAPIType && roleEntry.StackSlug == "" {
-			return logical.ErrorResponse("need to specify a stack_slug for HTTP API keys."), nil
+		if roleEntry.APIType == GrafanaAPIType && roleEntry.StackSlug == "" {
+			return logical.ErrorResponse("need to specify a stack_slug for Grafana API keys."), nil
 		}
-	} else if roleEntry.APIType == HTTPAPIType {
-		return logical.ErrorResponse("need to specify a stack_slug for HTTP API keys."), nil
+	} else if roleEntry.APIType == GrafanaAPIType {
+		return logical.ErrorResponse("need to specify a stack_slug for Grafana API keys."), nil
 	}
 
 	if !ok && createOperation {

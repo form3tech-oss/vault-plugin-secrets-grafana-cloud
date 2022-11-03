@@ -59,10 +59,10 @@ func (b *grafanaCloudBackend) grafanaCloudKey() *framework.Secret {
 	}
 }
 
-func deleteHTTPAPIKey(client *grafanaclient.Client, stackSlug string, tokenID int64) error {
+func deleteGrafanaAPIKey(client *grafanaclient.Client, stackSlug string, tokenID int64) error {
 	instanceClient, cleanup, err := client.CreateTemporaryStackGrafanaClient(stackSlug, tempKeyPrefix, tempKeyTTL)
 	if err != nil {
-		return fmt.Errorf("error creating temporary Grafana Cloud HTTP API key: %w", err)
+		return fmt.Errorf("error creating temporary Grafana API key: %w", err)
 	}
 
 	defer func() {
@@ -101,7 +101,7 @@ func (b *grafanaCloudBackend) keyRevoke(ctx context.Context, req *logical.Reques
 		tokenID := req.Secret.InternalData["id"].(string)
 		stackSlug := req.Secret.InternalData["stack_slug"].(string)
 		id, _ := strconv.ParseInt(tokenID, 10, 64)
-		err = deleteHTTPAPIKey(c, stackSlug, id)
+		err = deleteGrafanaAPIKey(c, stackSlug, id)
 	}
 
 	if err != nil {
@@ -178,7 +178,7 @@ func createCloudKey(
 	}, nil
 }
 
-func createHTTPKey(
+func createGrafanaKey(
 	_ context.Context,
 	c *grafanaclient.Client,
 	stackSlug string,
@@ -191,13 +191,13 @@ func createHTTPKey(
 	tokenName := fmt.Sprintf("%s_%s", roleName, suffix)
 	instanceClient, cleanup, err := c.CreateTemporaryStackGrafanaClient(stackSlug, tempKeyPrefix, tempKeyTTL)
 	if err != nil {
-		return nil, fmt.Errorf("error creating temporary Grafana Cloud HTTP API key: %w", err)
+		return nil, fmt.Errorf("error creating temporary Grafana API key: %w", err)
 	}
 
 	defer func() {
 		err := cleanup()
 		if err != nil {
-			log.Fatalf("error deleting temporary Grafana Cloud HTTP API key: %s", err)
+			log.Fatalf("error deleting temporary Grafana API key: %s", err)
 		}
 	}()
 
@@ -207,14 +207,14 @@ func createHTTPKey(
 		SecondsToLive: secondsToLive,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error creating Grafana Cloud HTTP API key: %w", err)
+		return nil, fmt.Errorf("error creating Grafana API key: %w", err)
 	}
 
 	return &GrafanaCloudKey{
 		ID:               strconv.FormatInt(key.ID, 10),
 		Name:             key.Name,
 		StackSlug:        stackSlug,
-		Type:             HTTPAPIType,
+		Type:             GrafanaAPIType,
 		Token:            key.Key,
 		User:             config.User,
 		PrometheusUser:   config.PrometheusUser,

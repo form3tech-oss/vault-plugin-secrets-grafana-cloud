@@ -56,7 +56,7 @@ func (b *grafanaCloudBackend) createKey(ctx context.Context, s logical.Storage, 
 	if roleEntry.APIType == CloudAPIType {
 		token, err = createCloudKey(ctx, client, config.Organisation, roleName, config, roleEntry.GrafanaCloudRole)
 	} else {
-		token, err = createHTTPKey(ctx, client, roleEntry.StackSlug, roleName, int64(roleEntry.TTL.Seconds()), config, roleEntry.GrafanaCloudRole)
+		token, err = createGrafanaKey(ctx, client, roleEntry.StackSlug, roleName, int64(roleEntry.TTL.Seconds()), config, roleEntry.GrafanaCloudRole)
 	}
 
 	if err != nil || token == nil {

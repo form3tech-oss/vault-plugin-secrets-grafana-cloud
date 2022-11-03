@@ -79,8 +79,8 @@ func TestAcceptanceAPIKey(t *testing.T) {
 	t.Run("add cloud user token role", acceptanceTestEnv.AddCloudUserTokenRole)
 	t.Run("read cloud user token cred", acceptanceTestEnv.ReadCloudUserToken)
 	t.Run("read cloud user token cred", acceptanceTestEnv.ReadCloudUserToken)
-	t.Run("add http user token role", acceptanceTestEnv.AddHTTPUserTokenRole)
-	t.Run("read http user token cred", acceptanceTestEnv.ReadHTTPUserToken)
-	t.Run("read http user token cred", acceptanceTestEnv.ReadHTTPUserToken)
+	t.Run("add grafana user token role", acceptanceTestEnv.AddGrafanaUserTokenRole)
+	t.Run("read grafana user token cred", acceptanceTestEnv.ReadGrafanaUserToken)
+	t.Run("read grafana user token cred", acceptanceTestEnv.ReadGrafanaUserToken)
 	t.Run("cleanup user tokens", acceptanceTestEnv.CleanupUserTokens)
 }

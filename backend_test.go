@@ -166,15 +166,15 @@ func (e *testEnv) ReadCloudUserToken(t *testing.T) {
 	}
 }
 
-// AddHTTPUserTokenRole adds a role for the Grafana Cloud
+// AddGrafanaUserTokenRole adds a role for the Grafana Cloud
 // API token.
-func (e *testEnv) AddHTTPUserTokenRole(t *testing.T) {
+func (e *testEnv) AddGrafanaUserTokenRole(t *testing.T) {
 	req := &logical.Request{
 		Operation: logical.UpdateOperation,
-		Path:      "roles/test-http-user-token",
+		Path:      "roles/test-grafana-user-token",
 		Storage:   e.Storage,
 		Data: map[string]interface{}{
-			"api_type":   "HTTP",
+			"api_type":   GrafanaAPIType,
 			"stack_slug": e.StackSlug,
 			"gc_role":    "Viewer",
 			"ttl":        "120s",
@@ -186,12 +186,12 @@ func (e *testEnv) AddHTTPUserTokenRole(t *testing.T) {
 	require.Nil(t, resp)
 }
 
-// ReadHTTPUserToken retrieves the user token
+// ReadGrafanaUserToken retrieves the user token
 // based on a Vault role.
-func (e *testEnv) ReadHTTPUserToken(t *testing.T) {
+func (e *testEnv) ReadGrafanaUserToken(t *testing.T) {
 	req := &logical.Request{
 		Operation: logical.ReadOperation,
-		Path:      "creds/test-http-user-token",
+		Path:      "creds/test-grafana-user-token",
 		Storage:   e.Storage,
 	}
 	resp, err := e.Backend.HandleRequest(e.Context, req)
@@ -203,7 +203,7 @@ func (e *testEnv) ReadHTTPUserToken(t *testing.T) {
 	require.NotEmpty(t, resp.Secret.InternalData["name"])
 	require.NotEmpty(t, resp.Secret.InternalData["type"])
 
-	require.Equal(t, HTTPAPIType, resp.Secret.InternalData["type"])
+	require.Equal(t, GrafanaAPIType, resp.Secret.InternalData["type"])
 	require.Equal(t, e.StackSlug, resp.Secret.InternalData["stack_slug"])
 
 	if e.SecretToken != "" {
@@ -216,7 +216,7 @@ func (e *testEnv) ReadHTTPUserToken(t *testing.T) {
 		e.IssuedTokens = append(e.IssuedTokens, issuedToken{
 			ID:   resp.Secret.InternalData["id"].(string),
 			Name: t.(string),
-			Type: HTTPAPIType,
+			Type: GrafanaAPIType,
 		})
 	}
 }
@@ -239,7 +239,7 @@ func (e *testEnv) CleanupUserTokens(t *testing.T) {
 			err = client.DeleteCloudAPIKey(e.Organisation, token.Name)
 		} else {
 			tokenID, _ := strconv.ParseInt(token.ID, 10, 64)
-			err = deleteHTTPAPIKey(client, e.StackSlug, tokenID)
+			err = deleteGrafanaAPIKey(client, e.StackSlug, tokenID)
 		}
 
 		if err != nil {

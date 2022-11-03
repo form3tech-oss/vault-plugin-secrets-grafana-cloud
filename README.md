@@ -106,42 +106,42 @@ user               $CONFIGURED_USER_ID
 curl -H "Authorization: Bearer $GRAFANA_CLOUD_TOKEN" https://grafana.com/api/orgs/<org_slug>/instances
 ```
 
-### HTTP API keys
+### Grafana API keys
 
 1. Setup role
 
 ```shell
-vault write grafanacloud/roles/httprole \
-    api_type="HTTP"
+vault write grafanacloud/roles/grafanarole \
+    api_type="Grafana"
     stack_slug=<your-stack-slug>
     gc_role="Viewer"
     ttl="300"
     max_ttl="3600"
 ```
 
-Notice how HTTP API keys are scoped to a specific stack.
+Notice how Grafana API keys are scoped to a specific stack.
 
 Valid values for `gc_role` are `Viewer`, `Admin` and `Editor`.
 
-2. Retrieve a new grafana cloud HTTP API key from Vault
+1. Retrieve a new Grafana API key from Vault
 
 ```shell
-vault read grafanacloud/creds/httprole 
+vault read grafanacloud/creds/grafanarole
 
 Key                Value
 ---                -----
-lease_id           hashicups/creds/httprole/$LEASE_ID
+lease_id           grafanacloud/creds/grafanarole/$LEASE_ID
 lease_duration     5m
 lease_renewable    true
-token              $GRAFANA_CLOUD_HTTP_TOKEN
-type               HTTP
+token              $GRAFANA_API_TOKEN
+type               Grafana
 ```
 
-3. Use the token in the grafana cloud HTTP API
+1. Use the token in the Grafana API
 
 ```shell
 # Search folders and dashboards
-curl -H "Authorization: Bearer $GRAFANA_CLOUD_HTTP_TOKEN" https://<your-stack-slug>.grafana.net/api/search/
+curl -H "Authorization: Bearer $GRAFANA_API_TOKEN" https://<your-stack-slug>.grafana.net/api/search/
 ```
 
 ## Testing

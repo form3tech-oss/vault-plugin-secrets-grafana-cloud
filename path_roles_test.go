@@ -10,12 +10,12 @@ import (
 )
 
 const (
-	vaultCloudRole = "vaultCloudRole"
-	vaultHTTPRole  = "vaultHTTPRole"
-	gcRole         = "Viewer"
-	testTTL        = int64(120)
-	testMaxTTL     = int64(3600)
-	testStackSlug  = "testStack"
+	vaultCloudRole   = "vaultCloudRole"
+	vaultGrafanaRole = "vaultGrafanaRole"
+	gcRole           = "Viewer"
+	testTTL          = int64(120)
+	testMaxTTL       = int64(3600)
+	testStackSlug    = "testStack"
 )
 
 func TestUserRole(t *testing.T) {
@@ -34,9 +34,9 @@ func TestUserRole(t *testing.T) {
 		}
 
 		_, err := testTokenRoleCreate(t, b, s,
-			vaultHTTPRole,
+			vaultGrafanaRole,
 			map[string]interface{}{
-				"api_type":   "HTTP",
+				"api_type":   GrafanaAPIType,
 				"stack_slug": testStackSlug,
 				"ttl":        testTTL,
 				"max_ttl":    testMaxTTL,
@@ -60,10 +60,10 @@ func TestUserRole(t *testing.T) {
 		require.Nil(t, resp)
 	})
 
-	t.Run("Create HTTP User Role (HTTP type) - pass", func(t *testing.T) {
-		resp, err := testTokenRoleCreate(t, b, s, vaultHTTPRole, map[string]interface{}{
+	t.Run("Create Grafana User Role (Grafana type) - pass", func(t *testing.T) {
+		resp, err := testTokenRoleCreate(t, b, s, vaultGrafanaRole, map[string]interface{}{
 			"gc_role":    gcRole,
-			"api_type":   "HTTP",
+			"api_type":   CloudAPIType,
 			"stack_slug": testStackSlug,
 			"ttl":        testTTL,
 			"max_ttl":    testMaxTTL,
@@ -149,8 +149,8 @@ func TestUserRole(t *testing.T) {
 	})
 
 	t.Run("Create User Role - fail on missing stack", func(t *testing.T) {
-		resp, err := testTokenRoleCreate(t, b, s, vaultHTTPRole, map[string]interface{}{
-			"api_type": HTTPAPIType,
+		resp, err := testTokenRoleCreate(t, b, s, vaultGrafanaRole, map[string]interface{}{
+			"api_type": GrafanaAPIType,
 			"gc_role":  gcRole,
 		})
 
@@ -160,8 +160,8 @@ func TestUserRole(t *testing.T) {
 	})
 
 	t.Run("Create User Role - fail on empty stack", func(t *testing.T) {
-		resp, err := testTokenRoleCreate(t, b, s, vaultHTTPRole, map[string]interface{}{
-			"api_type":   HTTPAPIType,
+		resp, err := testTokenRoleCreate(t, b, s, vaultGrafanaRole, map[string]interface{}{
+			"api_type":   GrafanaAPIType,
 			"gc_role":    gcRole,
 			"stack_slug": "",
 		})
@@ -198,8 +198,8 @@ func TestUserRole(t *testing.T) {
 		require.Nil(t, resp)
 	})
 
-	t.Run("Update User Role (HTTP type)", func(t *testing.T) {
-		resp, err := testTokenRoleUpdate(t, b, s, vaultHTTPRole, map[string]interface{}{
+	t.Run("Update User Role (Grafana type)", func(t *testing.T) {
+		resp, err := testTokenRoleUpdate(t, b, s, vaultGrafanaRole, map[string]interface{}{
 			"ttl":     "1m",
 			"max_ttl": "5h",
 		})
@@ -224,8 +224,8 @@ func TestUserRole(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("Delete User Role (HTTP type)", func(t *testing.T) {
-		_, err := testTokenRoleDelete(t, b, s, vaultHTTPRole)
+	t.Run("Delete User Role (Grafana type)", func(t *testing.T) {
+		_, err := testTokenRoleDelete(t, b, s, vaultGrafanaRole)
 
 		require.NoError(t, err)
 	})
