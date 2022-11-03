@@ -68,7 +68,7 @@ func deleteGrafanaAPIKey(client *grafanaclient.Client, stackSlug string, tokenID
 	defer func() {
 		err := cleanup()
 		if err != nil {
-			log.Fatalf("error deleting temporary Grafana Cloud HTTP API key: %s", err)
+			log.Printf("error deleting temporary Grafana Cloud HTTP API key: %s", err)
 		}
 	}()
 
@@ -197,7 +197,7 @@ func createGrafanaKey(
 	defer func() {
 		err := cleanup()
 		if err != nil {
-			log.Fatalf("error deleting temporary Grafana API key: %s", err)
+			log.Printf("error deleting temporary Grafana API key: %s", err)
 		}
 	}()
 
