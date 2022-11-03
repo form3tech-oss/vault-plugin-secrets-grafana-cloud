@@ -63,9 +63,9 @@ func newAcceptanceTestEnv() (*testEnv, error) {
 	}, nil
 }
 
-// TestAcceptanceAPIKey tests a series of steps to make
+// TestAcceptanceCloudAPIKey tests a series of steps to make
 // sure the role and token creation work correctly.
-func TestAcceptanceAPIKey(t *testing.T) {
+func TestAcceptanceCloudAPIKey(t *testing.T) {
 	if !runAcceptanceTests {
 		t.SkipNow()
 	}
@@ -79,6 +79,20 @@ func TestAcceptanceAPIKey(t *testing.T) {
 	t.Run("add cloud user token role", acceptanceTestEnv.AddCloudUserTokenRole)
 	t.Run("read cloud user token cred", acceptanceTestEnv.ReadCloudUserToken)
 	t.Run("read cloud user token cred", acceptanceTestEnv.ReadCloudUserToken)
+	t.Run("cleanup user tokens", acceptanceTestEnv.CleanupUserTokens)
+}
+
+func TestAcceptanceGrafanaAPIKey(t *testing.T) {
+	if !runAcceptanceTests {
+		t.SkipNow()
+	}
+
+	acceptanceTestEnv, err := newAcceptanceTestEnv()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("add config", acceptanceTestEnv.AddConfig)
 	t.Run("add grafana user token role", acceptanceTestEnv.AddGrafanaUserTokenRole)
 	t.Run("read grafana user token cred", acceptanceTestEnv.ReadGrafanaUserToken)
 	t.Run("read grafana user token cred", acceptanceTestEnv.ReadGrafanaUserToken)
