@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/go-resty/resty/v2 v2.7.0
 	github.com/google/uuid v1.3.0
-	github.com/grafana/grafana-api-golang-client v0.11.2
+	github.com/grafana/grafana-api-golang-client v0.12.1
 	github.com/hashicorp/go-hclog v0.16.2
 	github.com/hashicorp/vault-testing-stepwise v0.1.1
 	github.com/hashicorp/vault/api v1.4.0
