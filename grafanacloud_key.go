@@ -97,15 +97,21 @@ func (b *grafanaCloudBackend) keyRevoke(ctx context.Context, req *logical.Reques
 
 	if !found || apiType == "Cloud" {
 		err = c.DeleteCloudAPIKey(org, tokenName)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		tokenID := req.Secret.InternalData["id"].(string)
 		stackSlug := req.Secret.InternalData["stack_slug"].(string)
-		id, _ := strconv.ParseInt(tokenID, 10, 64)
-		err = deleteGrafanaAPIKey(c, stackSlug, id)
-	}
+		id, err := strconv.ParseInt(tokenID, 10, 64)
+		if err != nil {
+			return nil, err
+		}
 
-	if err != nil {
-		return nil, err
+		err = deleteGrafanaAPIKey(c, stackSlug, id)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return nil, nil
