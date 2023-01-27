@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - master
+      - 'prerelease-**'
   pull_request: {}
 
 jobs:
@@ -38,7 +39,6 @@ jobs:
   tag:
     name: SemVer Tag
     needs: test
-    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -50,11 +50,11 @@ jobs:
         with:
           custom_tag: ${{ needs.test.outputs.tag }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          pre_release_branches: "prerelease"
 
   goreleaser:
     name: Create GH Release
     needs: tag
-    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
